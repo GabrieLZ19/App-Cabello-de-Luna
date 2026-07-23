@@ -1,0 +1,315 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+  ASSISTANT
+  SUPPORT
+}
+
+enum Language {
+  ES
+  EN
+  PT
+}
+
+enum EnrollmentStatus {
+  PENDING_PAYMENT
+  ACTIVE
+  SUSPENDED
+}
+
+enum Phase {
+  THEORY
+  PRACTICE
+  GRADUATED
+}
+
+enum CutStatus {
+  PENDING
+  IN_REVIEW
+  APPROVED
+  CORRECTION_REQUIRED
+}
+
+enum ModuleStatus {
+  PUBLISHED
+  DRAFT
+  INACTIVE
+}
+
+enum PaymentType {
+  ENROLLMENT
+  TUITION
+}
+
+enum Currency {
+  MXN
+  USD
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  FAILED
+}
+
+model Franchise {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  location    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+
+  @@map("franchises")
+}
+
+model User {
+  id               String           @id @default(uuid())
+  email            String           @unique
+  passwordHash     String
+  fullName         String
+  phone            String?
+  role             Role             @default(STUDENT)
+  language         Language         @default(ES)
+  enrollmentStatus EnrollmentStatus @default(PENDING_PAYMENT)
+  currentPhase     Phase            @default(THEORY)
+  
+  franchiseId      String?
+  franchise        Franchise?       @relation(fields: [franchiseId], references: [id])
+  
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  payments         Payment[]
+  attempts         EvaluationAttempt[]
+  practicalModels  PracticalModel[]
+  badges           UserBadge[]
+  activityLogs     ActivityLog[]
+  feedbacksGiven   Feedback[]       @relation("InstructorFeedback")
+
+  @@map("users")
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          PaymentType
+  currency      Currency      @default(MXN)
+  amount        Float
+  status        PaymentStatus @default(PENDING)
+  paymentMethod String?
+  reference     String?
+  createdAt     DateTime      @default(now())
+
+  @@map("payments")
+}
+
+model Avatar {
+  id             String   @id @default(uuid())
+  name           String
+  specialty      String
+  llmModel       String   @default("gpt-4o")
+  temperature    Float    @default(0.7)
+  maxTokens      Int      @default(1000)
+  systemPrompt   String   @db.Text
+  tokenBudget    Int      @default(50000)
+  avatarVideoUrl String?
+  isMarianaClone Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  modules        TheoreticalModule[]
+
+  @@map("avatars")
+}
+
+model TheoreticalModule {
+  id                   String   @id @default(uuid())
+  month                Int      // 1..10
+  week                 Int      // 1..4
+  title                String
+  description          String?  @db.Text
+  avatarId             String
+  avatar               Avatar   @relation(fields: [avatarId], references: [id])
+  videoUrl             String?
+  summaryText          String?  @db.Text
+  totalDurationMinutes Int      @default(40)
+  releaseDate          DateTime?
+  order                Int      @default(1)
+  
+  // Campos pedagógicos detallados (extraídos de la estructura oficial en PDF)
+  level                String?  @default("Técnico Profesional")
+  instructorName       String?  @default("Especialista en Tricología Cosmética y Tricotilosis – Método Cabello de Luna®")
+  contentMarkdown      String?  @db.Text
+  objectivesJson       Json?    // Array de objetivos de aprendizaje
+  competenciesJson     Json?    // Array de competencias a desarrollar
+  glossaryJson         Json?    // Términos y definiciones de glosario
+  practicalCaseJson    Json?    // Caso práctico de estudio (ej. María, 29 años)
+  practicalActivityJson Json?   // Actividad práctica guiada
+  moduleName           String?  @default("Módulo 1: Fundamentos de Tricología Cosmética")
+  introductionText     String?  @db.Text
+  keyConceptsJson      Json?    // Conceptos clave de la clase
+  conclusionText       String?  @db.Text // Conclusión de la clase
+  bibliographyJson     Json?    // Bibliografía y referencias oficiales
+  hasVideo             Boolean  @default(true)
+  status               ModuleStatus @default(PUBLISHED)
+  sectionTogglesJson   Json?    // Objeto con visibilidad ON/OFF por sección
+  chaptersJson         Json?    // Capítulos del reproductor de la lección
+  
+  createdAt            DateTime @default(now())
+
+  evaluations          Evaluation[]
+
+  @@map("theoretical_modules")
+}
+
+model Evaluation {
+  id             String   @id @default(uuid())
+  moduleId       String
+  module         TheoreticalModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title          String
+  passingScore   Int      @default(7)
+  totalQuestions Int      @default(10)
+  createdAt      DateTime @default(now())
+
+  questions      Question[]
+  attempts       EvaluationAttempt[]
+
+  @@map("evaluations")
+}
+
+model Question {
+  id                 String     @id @default(uuid())
+  evaluationId       String
+  evaluation         Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  text               String     @db.Text
+  options            Json       // Array de opciones string
+  correctAnswerIndex Int
+  explanation        String?    @db.Text
+
+  @@map("questions")
+}
+
+model EvaluationAttempt {
+  id           String     @id @default(uuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  evaluationId String
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  score        Int
+  passed       Boolean
+  answers      Json       // Respuestas seleccionadas
+  startedAt    DateTime   @default(now())
+  completedAt  DateTime?
+
+  @@map("evaluation_attempts")
+}
+
+model PracticalModel {
+  id                 String   @id @default(uuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  modelNumber        Int      // 1..10
+  modelName          String
+  lunarPhaseAssigned String?
+  status             String   @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED
+  createdAt          DateTime @default(now())
+
+  cuts               Cut[]
+
+  @@map("practical_models")
+}
+
+model Cut {
+  id          String    @id @default(uuid())
+  modelId     String
+  model       PracticalModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  cutNumber   Int       // 1..7
+  lunarPhase  String?   // ej: "Cuarto Creciente"
+  status      CutStatus @default(PENDING)
+  submittedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  evidence    Evidence?
+  feedbacks   Feedback[]
+
+  @@map("cuts")
+}
+
+model Evidence {
+  id                 String   @id @default(uuid())
+  cutId              String   @unique
+  cut                Cut      @relation(fields: [cutId], references: [id], onDelete: Cascade)
+  photoBeforeUrl     String
+  photoAfterUrl      String
+  videoOptionalUrl   String?
+  technicalSheetText String   @db.Text
+  createdAt          DateTime @default(now())
+
+  @@map("evidences")
+}
+
+model Feedback {
+  id           String    @id @default(uuid())
+  cutId        String
+  cut          Cut       @relation(fields: [cutId], references: [id], onDelete: Cascade)
+  instructorId String
+  instructor   User      @relation("InstructorFeedback", fields: [instructorId], references: [id])
+  statusResult CutStatus
+  comments     String    @db.Text
+  checklist    Json?     // Lista de cotejo verificada
+  reviewedAt   DateTime  @default(now())
+
+  @@map("feedbacks")
+}
+
+model Badge {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  iconName    String
+  category    String   // RACHA, FASE_LUNAR, HITO
+
+  userBadges  UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId    String
+  badge      Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  unlockedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String?
+  details   Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@map("activity_logs")
+}

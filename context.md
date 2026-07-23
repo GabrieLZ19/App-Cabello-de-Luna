@@ -1,0 +1,53 @@
+# Contexto de Desarrollo y Producción - App Cabello de Luna / ILTCT
+
+Este documento recopila la configuración relevante, variables de entorno, mecanismos de prueba en desarrollo y los pasos necesarios para desplegar a producción.
+
+---
+
+## 🔑 Autenticación y Verificación OTP
+
+### Modo Desarrollo (`NODE_ENV !== 'production'`)
+- **Código Maestro de Prueba**: El código de verificación universal **`123456`** está habilitado para pruebas rápidas en la pantalla de verificación (`verify.tsx`).
+- **Impresión de OTP en Consola**: Cada vez que se registra un usuario o se reenvía un código, el backend genera un código aleatorio de 6 dígitos y lo imprime en los logs de la terminal (`LOG [MailService] [CÓDIGO VERIFICACIÓN OTP] Destinatario: ... | Código: XXXXXX`).
+- **Inclusión en JSON**: En modo desarrollo, la respuesta de la API REST también incluye la propiedad `otpCode` en el cuerpo del JSON para pruebas automáticas.
+
+### Modo Producción (`NODE_ENV === 'production'`)
+- El código universal `123456` se **desactiva automáticamente**.
+- La propiedad `otpCode` se omite de los JSON devueltos por el backend.
+- Los códigos expirarán estrictamente a los 15 minutos de su generación.
+
+---
+
+## 🔒 Encriptación de Contraseñas y Seguridad
+
+- **Bcrypt (10 Rondas de Salado)**: Las contraseñas de las alumnas y usuarios se encriptan con `bcrypt` en el servidor NestJS antes de registrar la fila en Supabase. Nunca se almacenan contraseñas en texto plano.
+- **JWT (JSON Web Token)**: Tras la verificación, el cliente recibe un `accessToken` JWT que se guarda de manera segura en la aplicación móvil usando `expo-secure-store`.
+
+---
+
+## ✉️ Configuración para Producción (Correo Transaccional)
+
+Para habilitar el envío real de correos electrónicos a las casillas de las alumnas en producción, agregar las siguientes variables en `apps/backend/.env`:
+
+```env
+NODE_ENV=production
+JWT_SECRET=tu_clave_secreta_super_segura
+
+# Configuración SMTP (Ejemplo con Gmail, Resend SMTP o Brevo)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=notificaciones@tu-instituto.com
+SMTP_PASS=tu_contraseña_de_aplicacion
+```
+
+---
+
+## 🗄️ Base de Datos y Supabase
+- **URL PostgreSQL**: Conectado a la instancia de Supabase PostgreSQL a través del pooler IPv4.
+- **Franquicias de Prueba**: `ILTCT-MEX` (Franquicia activa configurada en la tabla `franchises`).
+
+---
+
+## 📱 Móvil (Expo React Native)
+- **Safe Area Insets**: Las pestañas inferiores están envueltas dinámicamente con `useSafeAreaInsets()` para evitar solapamientos con la barra de navegación nativa de Android.
+- **Ocultado de Contraseñas**: Los TextInput de contraseñas incluyen `secureTextEntry={!showPassword}`, `autoCapitalize="none"`, `autoCorrect={false}` y `spellCheck={false}` para evitar vistas previas del teclado táctil.

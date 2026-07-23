@@ -1,0 +1,25 @@
+{
+  "auth": {
+    "login": "Iniciar Sesión",
+    "register": "Crear Cuenta",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "verifyCode": "Verificar Código",
+    "resetPassword": "Restablecer Contraseña"
+  },
+  "tabs": {
+    "home": "Inicio",
+    "theory": "Teoría",
+    "practice": "Práctica",
+    "profile": "Perfil"
+  },
+  "home": {
+    "welcome": "Hola",
+    "currentWeek": "Semana Actual",
+    "progress": "Progreso General"
+  },
+  "practice": {
+    "title": "Fase Práctica",
+    "cutsCount": "Cortes",
+    "uploadEvidence": "Subir Ficha"
+  }
+}

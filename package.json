@@ -1,0 +1,24 @@
+{
+  "name": "cabello-de-luna-monorepo",
+  "private": true,
+  "scripts": {
+    "dev:mobile": "pnpm --filter @iltct/mobile start",
+    "dev:backend": "pnpm --filter @iltct/backend start:dev",
+    "dev:crm": "pnpm --filter @iltct/web-crm dev",
+    "build:all": "pnpm --recursive run build",
+    "db:generate": "pnpm --filter @iltct/db generate",
+    "db:push": "pnpm --filter @iltct/db push"
+  },
+  "overrides": {
+    "@types/react": "18.3.2",
+    "@types/react-dom": "18.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "autoprefixer": "^10.5.4",
+    "postcss": "^8.5.20",
+    "prettier": "^3.2.5",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.4.0"
+  }
+}

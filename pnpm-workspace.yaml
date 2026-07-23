@@ -1,0 +1,31 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+allowBuilds:
+  '@nestjs/core': true
+  '@prisma/client': true
+  '@prisma/engines': true
+  bcrypt: true
+  prisma: true
+
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - '@prisma/client'
+  - '@prisma/engines'
+  - 'bcrypt'
+  - 'prisma'
+
+overrides:
+  lightningcss: '1.30.1'
+
+packageExtensions:
+  metro-cache:
+    exports:
+      ".": "./src/index.js"
+      "./package.json": "./package.json"
+      "./src/stores/FileStore": "./src/stores/FileStore.js"
+      "./src/stores/FileStore.js": "./src/stores/FileStore.js"
+      "./src/*": "./src/*"
+      "./private/*": "./src/*.js"
+      "./*": "./*"

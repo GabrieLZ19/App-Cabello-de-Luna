@@ -1,0 +1,22 @@
+# expo
+.expo/
+dist/
+web-build/
+
+# native
+ios/
+android/
+
+# dependencies
+node_modules/
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# OS & Editor files
+.DS_Store
+*.pem
+Thumbs.db

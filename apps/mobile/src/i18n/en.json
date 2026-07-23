@@ -1,0 +1,25 @@
+{
+  "auth": {
+    "login": "Sign In",
+    "register": "Create Account",
+    "forgotPassword": "Forgot your password?",
+    "verifyCode": "Verify Code",
+    "resetPassword": "Reset Password"
+  },
+  "tabs": {
+    "home": "Home",
+    "theory": "Theory",
+    "practice": "Practice",
+    "profile": "Profile"
+  },
+  "home": {
+    "welcome": "Hello",
+    "currentWeek": "Current Week",
+    "progress": "Overall Progress"
+  },
+  "practice": {
+    "title": "Practical Phase",
+    "cutsCount": "Cuts",
+    "uploadEvidence": "Upload Record"
+  }
+}
