@@ -37,7 +37,7 @@ export class ModulesService {
       ? (data.status as ModuleStatus)
       : ModuleStatus.PUBLISHED;
 
-    return this.prisma.theoreticalModule.create({
+    const createdModule = await this.prisma.theoreticalModule.create({
       data: {
         month: Number(data.month) || 1,
         week: Number(data.week) || 1,
@@ -63,6 +63,26 @@ export class ModulesService {
         avatarId,
       },
     });
+
+    if (data.quizQuestions && Array.isArray(data.quizQuestions) && data.quizQuestions.length > 0) {
+      await this.prisma.evaluation.create({
+        data: {
+          moduleId: createdModule.id,
+          title: `Autoevaluación: ${createdModule.title}`,
+          passingScore: 7,
+          totalQuestions: data.quizQuestions.length,
+          questions: {
+            create: data.quizQuestions.map((q: any) => ({
+              text: q.questionText || q.text || '',
+              options: q.options || [],
+              correctAnswerIndex: Number(q.correctAnswerIndex) || 0,
+            })),
+          },
+        },
+      });
+    }
+
+    return createdModule;
   }
 
   async updateTheoreticalModule(id: string, data: any) {
@@ -81,7 +101,7 @@ export class ModulesService {
       ? (data.status as ModuleStatus)
       : existing.status;
 
-    return this.prisma.theoreticalModule.update({
+    const updatedModule = await this.prisma.theoreticalModule.update({
       where: { id },
       data: {
         title: data.title !== undefined ? data.title : existing.title,
@@ -108,6 +128,51 @@ export class ModulesService {
         avatarId,
       },
     });
+
+    if (data.quizQuestions && Array.isArray(data.quizQuestions) && data.quizQuestions.length > 0) {
+      const existingEval = await this.prisma.evaluation.findFirst({
+        where: { moduleId: id }
+      });
+
+      if (existingEval) {
+        await this.prisma.question.deleteMany({
+          where: { evaluationId: existingEval.id }
+        });
+
+        await this.prisma.evaluation.update({
+          where: { id: existingEval.id },
+          data: {
+            title: `Autoevaluación: ${updatedModule.title}`,
+            totalQuestions: data.quizQuestions.length,
+            questions: {
+              create: data.quizQuestions.map((q: any) => ({
+                text: q.questionText || q.text || '',
+                options: q.options || [],
+                correctAnswerIndex: Number(q.correctAnswerIndex) || 0,
+              })),
+            },
+          },
+        });
+      } else {
+        await this.prisma.evaluation.create({
+          data: {
+            moduleId: id,
+            title: `Autoevaluación: ${updatedModule.title}`,
+            passingScore: 7,
+            totalQuestions: data.quizQuestions.length,
+            questions: {
+              create: data.quizQuestions.map((q: any) => ({
+                text: q.questionText || q.text || '',
+                options: q.options || [],
+                correctAnswerIndex: Number(q.correctAnswerIndex) || 0,
+              })),
+            },
+          },
+        });
+      }
+    }
+
+    return updatedModule;
   }
 
   async getTheoreticalModules() {
