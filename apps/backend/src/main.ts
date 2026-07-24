@@ -32,8 +32,10 @@ async function bootstrap() {
   const port = process.env.PORT || 3001;
   // Escuchar en 0.0.0.0 para aceptar peticiones de dispositivos físicos y emuladores en la red local Wi-Fi
   await app.listen(port, '0.0.0.0');
-  console.log(`API corriendo en http://0.0.0.0:${port}/api/v1`);
-  console.log(`Documentación Swagger en http://localhost:${port}/api/docs`);
+  
+  const baseUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${port}`;
+  console.log(`API corriendo en ${baseUrl}/api/v1`);
+  console.log(`Documentación Swagger en ${baseUrl}/api/docs`);
 }
 
 bootstrap();
