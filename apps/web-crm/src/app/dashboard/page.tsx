@@ -9,6 +9,8 @@ import {
   Download as DownloadIcon,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { getTheoreticalModules } from "@/services/classService";
+import { getDashboardStats } from "@/services/dashboardService";
 
 const Users: any = UsersIcon;
 const Scissors: any = ScissorsIcon;
@@ -30,23 +32,13 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadDashboardData() {
       try {
-        const [modulesRes, usersStatsRes] = await Promise.all([
-          fetch("http://localhost:3001/api/v1/modules/theory"),
-          fetch("http://localhost:3001/api/v1/users/stats"),
+        const [modules, uStats] = await Promise.all([
+          getTheoreticalModules(),
+          getDashboardStats(),
         ]);
 
-        let totalModules = 0;
-        let activeStudents = 0;
-
-        if (modulesRes.ok) {
-          const modules = await modulesRes.json();
-          totalModules = Array.isArray(modules) ? modules.length : 0;
-        }
-
-        if (usersStatsRes.ok) {
-          const uStats = await usersStatsRes.json();
-          activeStudents = uStats.totalStudents || 0;
-        }
+        const totalModules = Array.isArray(modules) ? modules.length : 0;
+        const activeStudents = uStats?.totalStudents || 0;
 
         setStats({
           activeStudents,

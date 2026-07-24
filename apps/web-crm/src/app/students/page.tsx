@@ -11,6 +11,7 @@ import {
   UserCheck2 as UserCheck2Icon,
 } from "lucide-react";
 import CustomAlert, { AlertType } from "../../components/CustomAlert";
+import { getCRMStudents, createCRMUser, updateCRMUser } from "@/services/userService";
 
 const Users: any = UsersIcon;
 const UserPlus: any = UserPlusIcon;
@@ -58,11 +59,8 @@ export default function StudentsPage() {
 
   const fetchStudents = async () => {
     try {
-      const res = await fetch("http://localhost:3001/api/v1/users/students");
-      if (res.ok) {
-        const data = await res.json();
-        setStudentsList(data);
-      }
+      const data = await getCRMStudents();
+      setStudentsList(data);
     } catch (err) {
       console.error("Error al obtener lista de alumnos:", err);
     } finally {
@@ -79,13 +77,9 @@ export default function StudentsPage() {
     if (!newStudent.fullName || !newStudent.email) return;
 
     try {
-      const res = await fetch("http://localhost:3001/api/v1/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...newStudent,
-          role: "STUDENT",
-        }),
+      const res = await createCRMUser({
+        ...newStudent,
+        role: "STUDENT",
       });
 
       if (res.ok) {
@@ -118,18 +112,11 @@ export default function StudentsPage() {
     if (!selectedStudent) return;
 
     try {
-      const res = await fetch(
-        `http://localhost:3001/api/v1/users/${selectedStudent.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fullName: selectedStudent.fullName,
-            enrollmentStatus: selectedStudent.enrollmentStatus,
-            currentPhase: selectedStudent.currentPhase,
-          }),
-        },
-      );
+      const res = await updateCRMUser(selectedStudent.id, {
+        fullName: selectedStudent.fullName,
+        enrollmentStatus: selectedStudent.enrollmentStatus,
+        currentPhase: selectedStudent.currentPhase,
+      });
 
       if (res.ok) {
         setIsEditModalOpen(false);
@@ -164,14 +151,9 @@ export default function StudentsPage() {
       showCancel: true,
       onConfirm: async () => {
         try {
-          const res = await fetch(
-            `http://localhost:3001/api/v1/users/${student.id}`,
-            {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ enrollmentStatus: newStatus }),
-            },
-          );
+          const res = await updateCRMUser(student.id, {
+            enrollmentStatus: newStatus,
+          });
 
           if (res.ok) {
             await fetchStudents();

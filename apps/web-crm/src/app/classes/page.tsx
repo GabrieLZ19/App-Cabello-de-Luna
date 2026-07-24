@@ -14,6 +14,7 @@ import {
   Bookmark as BookmarkIcon,
 } from "lucide-react";
 import CustomAlert, { AlertType } from "../../components/CustomAlert";
+import { getTheoreticalModules, deleteTheoreticalClass } from "@/services/classService";
 
 const Link: any = LinkRaw;
 const BookOpen: any = BookOpenIcon;
@@ -50,11 +51,8 @@ export default function ClassesPage() {
 
   const fetchClasses = async () => {
     try {
-      const res = await fetch("http://localhost:3001/api/v1/modules/theory");
-      if (res.ok) {
-        const data = await res.json();
-        setModulesList(data);
-      }
+      const data = await getTheoreticalModules();
+      setModulesList(data);
     } catch (err) {
       console.error("Error al obtener clases:", err);
     } finally {
@@ -95,14 +93,9 @@ export default function ClassesPage() {
       showCancel: true,
       onConfirm: async () => {
         try {
-          const res = await fetch(
-            `http://localhost:3001/api/v1/modules/theory/${id}`,
-            {
-              method: "DELETE",
-            },
-          );
+          const success = await deleteTheoreticalClass(id);
 
-          if (res.ok) {
+          if (success) {
             await fetchClasses();
             setTimeout(() => {
               setAlertConfig({

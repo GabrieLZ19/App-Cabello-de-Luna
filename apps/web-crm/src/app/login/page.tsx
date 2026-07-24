@@ -10,13 +10,23 @@ const Shield: any = ShieldIcon;
 
 export default function LoginPage() {
   const { login } = useAuth();
-  const [email, setEmail] = useState('mariana@cabellodeluna.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('mariana@instituto.com');
+  const [password, setPassword] = useState('Admin123!');
   const [selectedRole, setSelectedRole] = useState<'ADMIN' | 'ASSISTANT'>('ADMIN');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    login(email, selectedRole);
+    setError('');
+    setLoading(true);
+    
+    const res = await login(email, password);
+    setLoading(false);
+    
+    if (!res.success) {
+      setError(res.message || 'Error al iniciar sesión');
+    }
   };
 
   return (
@@ -45,7 +55,8 @@ export default function LoginPage() {
               type="button"
               onClick={() => {
                 setSelectedRole('ADMIN');
-                setEmail('mariana@cabellodeluna.com');
+                setEmail('mariana@instituto.com');
+                setPassword('Admin123!');
               }}
               className={`p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 ${
                 selectedRole === 'ADMIN'
@@ -61,7 +72,8 @@ export default function LoginPage() {
               type="button"
               onClick={() => {
                 setSelectedRole('ASSISTANT');
-                setEmail('dani@cabellodeluna.com');
+                setEmail('dani@instituto.com');
+                setPassword('Assistant123!');
               }}
               className={`p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 ${
                 selectedRole === 'ASSISTANT'
@@ -75,6 +87,13 @@ export default function LoginPage() {
           </div>
         </div>
 
+        {/* Error Alert */}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-xl text-xs font-medium text-center">
+            {error}
+          </div>
+        )}
+
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -85,6 +104,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-[#0C0A07] border border-white/10 rounded-xl p-3 text-sm text-white focus:border-[#C9A45C] outline-none"
+              disabled={loading}
             />
           </div>
 
@@ -96,15 +116,17 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-[#0C0A07] border border-white/10 rounded-xl p-3 text-sm text-white focus:border-[#C9A45C] outline-none"
+              disabled={loading}
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-[#C9A45C] hover:bg-[#b5924d] text-black font-bold py-3.5 rounded-xl text-sm transition-all shadow-lg flex items-center justify-center space-x-2"
+            disabled={loading}
+            className="w-full bg-[#C9A45C] hover:bg-[#b5924d] disabled:opacity-50 text-black font-bold py-3.5 rounded-xl text-sm transition-all shadow-lg flex items-center justify-center space-x-2"
           >
             <Lock className="w-4 h-4" />
-            <span>Ingresar al Panel CRM</span>
+            <span>{loading ? 'Ingresando...' : 'Ingresar al Panel CRM'}</span>
           </button>
         </form>
       </div>

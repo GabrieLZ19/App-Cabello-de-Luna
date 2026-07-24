@@ -13,6 +13,7 @@ import {
   Power as PowerIcon,
 } from 'lucide-react';
 import CustomAlert, { AlertType } from '../../components/CustomAlert';
+import { getFranchises, createFranchise, updateFranchise } from '@/services/franchiseService';
 
 const Building: any = BuildingIcon;
 const Plus: any = PlusIcon;
@@ -59,11 +60,8 @@ export default function FranchisesPage() {
 
   const fetchFranchises = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/v1/franchises');
-      if (res.ok) {
-        const data = await res.json();
-        setFranchisesList(data);
-      }
+      const data = await getFranchises();
+      setFranchisesList(data);
     } catch (err) {
       console.error('Error al obtener franquicias:', err);
     } finally {
@@ -80,11 +78,7 @@ export default function FranchisesPage() {
     if (!newFranchise.code || !newFranchise.name) return;
 
     try {
-      const res = await fetch('http://localhost:3001/api/v1/franchises', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newFranchise),
-      });
+      const res = await createFranchise(newFranchise);
 
       if (res.ok) {
         setIsAddModalOpen(false);
@@ -108,15 +102,11 @@ export default function FranchisesPage() {
     if (!selectedFranchise) return;
 
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/franchises/${selectedFranchise.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          code: selectedFranchise.code,
-          name: selectedFranchise.name,
-          location: selectedFranchise.location,
-          isActive: selectedFranchise.isActive,
-        }),
+      const res = await updateFranchise(selectedFranchise.id, {
+        code: selectedFranchise.code,
+        name: selectedFranchise.name,
+        location: selectedFranchise.location,
+        isActive: selectedFranchise.isActive,
       });
 
       if (res.ok) {
@@ -149,11 +139,7 @@ export default function FranchisesPage() {
       showCancel: true,
       onConfirm: async () => {
         try {
-          const res = await fetch(`http://localhost:3001/api/v1/franchises/${franchise.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ isActive: !isCurrentlyActive }),
-          });
+          const res = await updateFranchise(franchise.id, { isActive: !isCurrentlyActive });
 
           if (res.ok) {
             await fetchFranchises();

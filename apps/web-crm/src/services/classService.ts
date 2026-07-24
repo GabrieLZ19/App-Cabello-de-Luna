@@ -1,5 +1,4 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
+import { apiRequest } from "./apiClient";
 
 /**
  * Envía un archivo (.pdf, .md, .txt) al servidor usando FormData
@@ -10,9 +9,9 @@ export async function parseClassFile(file: File) {
     const formData = new FormData();
     formData.append("file", file);
 
-    const response = await fetch(`${API_BASE_URL}/modules/theory/parse-pdf`, {
+    const response = await apiRequest("/modules/theory/parse-pdf", {
       method: "POST",
-      body: formData, // Fetch ajusta automáticamente los headers multipart/form-data
+      body: formData,
     });
 
     if (!response.ok) {
@@ -31,7 +30,7 @@ export async function parseClassFile(file: File) {
  */
 export async function getTheoreticalModules() {
   try {
-    const response = await fetch(`${API_BASE_URL}/modules/theory`).catch(() => null);
+    const response = await apiRequest("/modules/theory").catch(() => null);
     if (!response || !response.ok) return [];
     return await response.json();
   } catch (error) {
@@ -45,7 +44,7 @@ export async function getTheoreticalModules() {
  */
 export async function getTheoreticalModuleById(id: string) {
   try {
-    const response = await fetch(`${API_BASE_URL}/modules/theory/${id}`).catch(() => null);
+    const response = await apiRequest(`/modules/theory/${id}`).catch(() => null);
     if (!response || !response.ok) return null;
     return await response.json();
   } catch (error) {
@@ -59,11 +58,8 @@ export async function getTheoreticalModuleById(id: string) {
  */
 export async function saveTheoreticalClass(payload: Record<string, any>) {
   try {
-    const response = await fetch(`${API_BASE_URL}/modules/theory`, {
+    const response = await apiRequest("/modules/theory", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify(payload),
     });
 
@@ -86,11 +82,8 @@ export async function updateTheoreticalClass(
   payload: Record<string, any>,
 ) {
   try {
-    const response = await fetch(`${API_BASE_URL}/modules/theory/${id}`, {
+    const response = await apiRequest(`/modules/theory/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify(payload),
     });
 
@@ -110,7 +103,7 @@ export async function updateTheoreticalClass(
  */
 export async function deleteTheoreticalClass(id: string) {
   try {
-    const response = await fetch(`${API_BASE_URL}/modules/theory/${id}`, {
+    const response = await apiRequest(`/modules/theory/${id}`, {
       method: "DELETE",
     });
 
@@ -120,3 +113,4 @@ export async function deleteTheoreticalClass(id: string) {
     return false;
   }
 }
+

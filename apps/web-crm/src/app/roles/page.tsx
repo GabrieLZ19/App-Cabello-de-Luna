@@ -11,6 +11,7 @@ import {
   UserCheck2 as UserCheck2Icon,
 } from "lucide-react";
 import CustomAlert, { AlertType } from "../../components/CustomAlert";
+import { getCRMStaff, createCRMUser, updateCRMUser } from "@/services/userService";
 
 const ShieldCheck: any = ShieldCheckIcon;
 const Plus: any = PlusIcon;
@@ -56,11 +57,8 @@ export default function RolesPage() {
 
   const fetchStaffUsers = async () => {
     try {
-      const res = await fetch("http://localhost:3001/api/v1/users/staff");
-      if (res.ok) {
-        const data = await res.json();
-        setUsersList(data);
-      }
+      const data = await getCRMStaff();
+      setUsersList(data);
     } catch (err) {
       console.error("Error al obtener personal administrativo:", err);
     } finally {
@@ -77,11 +75,7 @@ export default function RolesPage() {
     if (!newUser.fullName || !newUser.email) return;
 
     try {
-      const res = await fetch("http://localhost:3001/api/v1/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newUser),
-      });
+      const res = await createCRMUser(newUser);
 
       if (res.ok) {
         setIsAddModalOpen(false);
@@ -111,18 +105,11 @@ export default function RolesPage() {
     if (!selectedUser) return;
 
     try {
-      const res = await fetch(
-        `http://localhost:3001/api/v1/users/${selectedUser.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fullName: selectedUser.fullName,
-            role: selectedUser.role,
-            enrollmentStatus: selectedUser.enrollmentStatus,
-          }),
-        },
-      );
+      const res = await updateCRMUser(selectedUser.id, {
+        fullName: selectedUser.fullName,
+        role: selectedUser.role,
+        enrollmentStatus: selectedUser.enrollmentStatus,
+      });
 
       if (res.ok) {
         setIsEditModalOpen(false);
@@ -158,14 +145,7 @@ export default function RolesPage() {
       showCancel: true,
       onConfirm: async () => {
         try {
-          const res = await fetch(
-            `http://localhost:3001/api/v1/users/${user.id}`,
-            {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ enrollmentStatus: newStatus }),
-            },
-          );
+          const res = await updateCRMUser(user.id, { enrollmentStatus: newStatus });
 
           if (res.ok) {
             await fetchStaffUsers();
