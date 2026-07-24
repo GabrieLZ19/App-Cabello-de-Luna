@@ -20,6 +20,22 @@ import { Step4QuizAndClose } from "@/components/class-form/Step4QuizAndClose";
 
 const Link: any = LinkRaw;
 
+const splitHtmlLines = (html: string): string[] => {
+  if (!html) return [];
+  return html
+    .replace(/<\/div>/gi, "\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => {
+      if (!l) return false;
+      const textOnly = l.replace(/<[^>]+>/g, "").replace(/&nbsp;/gi, "").trim();
+      return textOnly !== "" && textOnly !== "•" && textOnly !== "-" && textOnly !== "*";
+    });
+};
+
+
 export default function EditClassPage() {
   const router = useRouter();
   const params = useParams();
@@ -123,8 +139,8 @@ export default function EditClassPage() {
               "Autoevaluación de Diagnóstico Capilar",
             quizPassingScore: mod.evaluations?.[0]?.passingScore || 7,
             quizQuestions: mod.evaluations?.[0]?.questions?.map((q: any) => ({
-              questionText: q.questionText,
-              options: q.optionsJson || [
+              questionText: q.text || q.questionText || "",
+              options: q.options || q.optionsJson || [
                 "Opción A",
                 "Opción B",
                 "Opción C",
@@ -278,17 +294,16 @@ export default function EditClassPage() {
         introductionText: formData.introductionText,
         summaryText: formData.summaryText,
         objectivesJson: formData.objectivesText
-          ? formData.objectivesText.split("\n").filter((l) => l.trim())
+          ? splitHtmlLines(formData.objectivesText)
           : [],
         competenciesJson: formData.competenciesText
-          ? formData.competenciesText.split("\n").filter((l) => l.trim())
+          ? splitHtmlLines(formData.competenciesText)
           : [],
         keyConceptsJson: formData.keyConceptsText
-          ? formData.keyConceptsText.split("\n").filter((l) => l.trim())
+          ? splitHtmlLines(formData.keyConceptsText)
           : [],
         glossaryJson: formData.glossaryText
-          ? formData.glossaryText
-              .split("\n")
+          ? splitHtmlLines(formData.glossaryText)
               .filter((l) => l.includes(":"))
               .map((l) => {
                 const parts = l.split(":");
@@ -303,9 +318,7 @@ export default function EditClassPage() {
               title: formData.practicalCaseTitle || "Caso Práctico",
               description: formData.practicalCaseDesc,
               questions: formData.practicalCaseQuestions
-                ? formData.practicalCaseQuestions
-                    .split("\n")
-                    .filter((l) => l.trim())
+                ? splitHtmlLines(formData.practicalCaseQuestions)
                 : [],
             }
           : null,
@@ -317,10 +330,11 @@ export default function EditClassPage() {
           : null,
         conclusionText: formData.conclusionText,
         bibliographyJson: formData.bibliographyText
-          ? formData.bibliographyText.split("\n").filter((l) => l.trim())
+          ? splitHtmlLines(formData.bibliographyText)
           : [],
         chaptersJson: formData.chapters || [],
         sectionTogglesJson: formData.sectionToggles,
+        quizQuestions: formData.quizQuestions,
       };
 
       await updateTheoreticalClass(classId, payload);
