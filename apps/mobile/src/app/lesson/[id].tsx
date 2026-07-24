@@ -31,7 +31,16 @@ import {
   ListChecks,
 } from 'lucide-react-native';
 import { GlassCard } from '@/components/GlassCard';
+import { HTMLText } from '@/components/HTMLText';
 import { getModuleById, TheoreticalModule, ChapterItem, GlossaryItem, PracticalCase, PracticalActivity, storage } from '@/services';
+
+const cleanTitle = (title?: string, week?: number) => {
+  if (!title) return '';
+  if (week === undefined) return title;
+  const regex = new RegExp(`^clase\\s*${week}\\s*[:\\-]?\\s*`, 'i');
+  return title.replace(regex, '').trim();
+};
+
 
 if (
   Platform.OS === 'android' &&
@@ -48,7 +57,7 @@ export default function LessonDetailScreen() {
   const [moduleData, setModuleData] = useState<TheoreticalModule | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentSegment, setCurrentSegment] = useState<
-    'video' | 'summary' | 'eval'
+    'video' | 'summary' | 'practice' | 'eval'
   >('video');
   const [expandedChapter, setExpandedChapter] = useState<number | null>(1);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -138,14 +147,76 @@ export default function LessonDetailScreen() {
     return [];
   };
 
+  const cleanList = (arr: any[] | null | undefined): string[] => {
+    if (!arr) return [];
+    return arr
+      .map((item) => (typeof item === 'string' ? item.trim() : ''))
+      .filter((item) => {
+        if (!item) return false;
+        const cleaned = item
+          .replace(/<[^>]+>/g, '')
+          .replace(/&[a-z0-9#]+;/gi, '')
+          .trim();
+        return cleaned !== '' && cleaned !== '•' && cleaned !== '-' && cleaned !== '*';
+      });
+  };
+
+  const getCleanGlossary = (rawGlossary: GlossaryItem[]): GlossaryItem[] => {
+    if (!rawGlossary || rawGlossary.length === 0) return [];
+    const combined = rawGlossary
+      .map(g => `${g.term}: ${g.definition}`)
+      .join(' ');
+
+    const lines = combined
+      .replace(/<div[^>]*>/gi, '\n')
+      .replace(/<\/div>/gi, '\n')
+      .replace(/<p[^>]*>/gi, '\n')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length > 0 && l.includes(':'));
+
+    return lines.map(line => {
+      const colonIdx = line.indexOf(':');
+      const term = line.substring(0, colonIdx).trim();
+      const definition = line.substring(colonIdx + 1).trim();
+      
+      const cleanTerm = term.replace(/^<\/?[^>]+>/, '').trim();
+      const cleanDef = definition.replace(/^<\/?[^>]+>/, '').trim();
+      
+      return {
+        term: cleanTerm || term,
+        definition: cleanDef || definition
+      };
+    });
+  };
+
+  const formatListItem = (text: string) => {
+    if (!text) return '';
+    const trimmed = text.trim().replace(/<[^>]+>/g, '').trim();
+    if (/^\d+[\.\)]/i.test(trimmed) || /^[•\-\*]/i.test(trimmed)) {
+      return text;
+    }
+    return `• ${text}`;
+  };
+
+  const isPrestructuredHtml = (arr: string[]): boolean => {
+    if (arr.length === 1 && arr[0]) {
+      const lower = arr[0].toLowerCase();
+      return lower.includes('<li') || lower.includes('<ul') || lower.includes('<ol');
+    }
+    return false;
+  };
+
   const chapters = getChaptersList();
-  const objectives: string[] = moduleData?.objectivesJson || [];
-  const competencies: string[] = moduleData?.competenciesJson || [];
-  const keyConcepts: string[] = moduleData?.keyConceptsJson || [];
-  const glossary: GlossaryItem[] = moduleData?.glossaryJson || [];
+  const objectives = cleanList(moduleData?.objectivesJson);
+  const competencies = cleanList(moduleData?.competenciesJson);
+  const keyConcepts = cleanList(moduleData?.keyConceptsJson);
+  const glossary = getCleanGlossary(moduleData?.glossaryJson || []);
   const practicalCase: PracticalCase | undefined = moduleData?.practicalCaseJson;
   const practicalActivity: PracticalActivity | undefined = moduleData?.practicalActivityJson;
-  const bibliography: string[] = moduleData?.bibliographyJson || [];
+  const bibliography = cleanList(moduleData?.bibliographyJson);
   const evaluationId = moduleData?.evaluations?.[0]?.id || 'eval-1';
   const totalQuestions = moduleData?.evaluations?.[0]?.totalQuestions || 5;
 
@@ -199,7 +270,7 @@ export default function LessonDetailScreen() {
             {moduleData?.moduleName}
           </Text>
           <Text style={{ color: '#FFFFFF', fontSize: 24, fontWeight: 'bold', lineHeight: 30 }}>
-            Clase {moduleData?.week}: {moduleData?.title}
+            Clase {moduleData?.week}: {cleanTitle(moduleData?.title, moduleData?.week)}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -216,8 +287,8 @@ export default function LessonDetailScreen() {
           </Text>
         </View>
 
-        {/* 3 Segment Progress Tabs */}
-        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
+        {/* 4 Segment Progress Tabs */}
+        <View style={{ flexDirection: 'row', gap: 6, marginBottom: 20 }}>
           <TouchableOpacity
             onPress={() => setCurrentSegment('video')}
             style={{ flex: 1 }}
@@ -231,7 +302,7 @@ export default function LessonDetailScreen() {
                 marginBottom: 6,
               }}
             />
-            <Text style={{ color: currentSegment === 'video' ? '#FFFFFF' : '#897F6B', fontSize: 12, fontWeight: 'bold' }}>
+            <Text style={{ color: currentSegment === 'video' ? '#FFFFFF' : '#897F6B', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>
               1 Video
             </Text>
           </TouchableOpacity>
@@ -249,8 +320,26 @@ export default function LessonDetailScreen() {
                 marginBottom: 6,
               }}
             />
-            <Text style={{ color: currentSegment === 'summary' ? '#FFFFFF' : '#897F6B', fontSize: 12, fontWeight: 'bold' }}>
+            <Text style={{ color: currentSegment === 'summary' ? '#FFFFFF' : '#897F6B', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>
               2 Resumen
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setCurrentSegment('practice')}
+            style={{ flex: 1 }}
+            activeOpacity={0.8}
+          >
+            <View
+              style={{
+                height: 3,
+                backgroundColor: currentSegment === 'practice' ? '#C9A45C' : 'rgba(255, 255, 255, 0.15)',
+                borderRadius: 2,
+                marginBottom: 6,
+              }}
+            />
+            <Text style={{ color: currentSegment === 'practice' ? '#FFFFFF' : '#897F6B', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>
+              3 Práctica
             </Text>
           </TouchableOpacity>
 
@@ -267,8 +356,8 @@ export default function LessonDetailScreen() {
                 marginBottom: 6,
               }}
             />
-            <Text style={{ color: currentSegment === 'eval' ? '#FFFFFF' : '#897F6B', fontSize: 12, fontWeight: 'bold' }}>
-              3 Evaluación
+            <Text style={{ color: currentSegment === 'eval' ? '#FFFFFF' : '#897F6B', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>
+              4 Eval
             </Text>
           </TouchableOpacity>
         </View>
@@ -276,6 +365,24 @@ export default function LessonDetailScreen() {
         {/* SEGMENT 1: VIDEO Y CAPÍTULOS DE LA LECCIÓN (100% DESDE SUPABASE DB) */}
         {currentSegment === 'video' && (
           <View>
+            {/* Introducción */}
+            {moduleData?.introductionText ? (
+              <GlassCard
+                style={{
+                  padding: 20,
+                  borderRadius: 24,
+                  backgroundColor: '#17120D',
+                  borderColor: 'rgba(201, 164, 92, 0.25)',
+                  borderWidth: 1,
+                  marginBottom: 16,
+                }}
+              >
+                <Text style={{ color: '#C9A45C', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+                  Introducción
+                </Text>
+                <HTMLText html={moduleData.introductionText} style={{ color: '#FFFFFF', fontSize: 13, lineHeight: 22 }} />
+              </GlassCard>
+            ) : null}
             {/* AI Avatar Player Banner Card */}
             <View
               style={{
@@ -424,9 +531,7 @@ export default function LessonDetailScreen() {
 
                     {isExpanded ? (
                       <GlassCard style={{ marginTop: 8, padding: 18, borderRadius: 16, backgroundColor: '#140E0A', borderColor: 'rgba(201, 164, 92, 0.2)', borderWidth: 1 }}>
-                        <Text style={{ color: '#B0A894', fontSize: 13, lineHeight: 22 }}>
-                          {chap.content}
-                        </Text>
+                        <HTMLText html={chap.content} style={{ color: '#B0A894', fontSize: 13, lineHeight: 22 }} />
                       </GlassCard>
                     ) : null}
                   </View>
@@ -456,6 +561,25 @@ export default function LessonDetailScreen() {
               </Text>
               <ChevronRight color="#B0A894" size={20} />
             </TouchableOpacity>
+
+            {/* Conclusión */}
+            {moduleData?.conclusionText ? (
+              <GlassCard
+                style={{
+                  padding: 20,
+                  borderRadius: 24,
+                  backgroundColor: '#17120D',
+                  borderColor: 'rgba(201, 164, 92, 0.25)',
+                  borderWidth: 1,
+                  marginBottom: 16,
+                }}
+              >
+                <Text style={{ color: '#C9A45C', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+                  Conclusión
+                </Text>
+                <HTMLText html={moduleData.conclusionText} style={{ color: '#FFFFFF', fontSize: 13, lineHeight: 22 }} />
+              </GlassCard>
+            ) : null}
 
             <TouchableOpacity
               onPress={() => setCurrentSegment('summary')}
@@ -507,39 +631,6 @@ export default function LessonDetailScreen() {
               </View>
             </View>
 
-            {/* SECCIÓN: INTRODUCCIÓN (Desplegable) */}
-            {moduleData?.introductionText ? (
-              <View>
-                <TouchableOpacity
-                  onPress={() => toggleSummarySectionKey('intro')}
-                  activeOpacity={0.85}
-                  style={{
-                    backgroundColor: '#17120D',
-                    borderRadius: 18,
-                    borderWidth: 1.5,
-                    borderColor: openSummarySections.intro ? '#C9A45C' : 'rgba(255, 255, 255, 0.08)',
-                    padding: 16,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: 'bold', flex: 1 }}>
-                    Introducción
-                  </Text>
-                  <ChevronDown color="#B0A894" size={20} style={{ transform: [{ rotate: openSummarySections.intro ? '180deg' : '0deg' }] }} />
-                </TouchableOpacity>
-
-                {openSummarySections.intro && (
-                  <GlassCard style={{ marginTop: 8, padding: 18, borderRadius: 16, backgroundColor: '#140E0A', borderColor: 'rgba(201, 164, 92, 0.2)', borderWidth: 1 }}>
-                    <Text style={{ color: '#FFFFFF', fontSize: 13, lineHeight: 22 }}>
-                      {moduleData.introductionText}
-                    </Text>
-                  </GlassCard>
-                )}
-              </View>
-            ) : null}
-
             {/* SECCIÓN: OBJETIVOS DE APRENDIZAJE (Desplegable) */}
             {objectives.length > 0 ? (
               <View>
@@ -565,12 +656,16 @@ export default function LessonDetailScreen() {
 
                 {openSummarySections.objectives && (
                   <GlassCard style={{ marginTop: 8, padding: 18, borderRadius: 16, backgroundColor: '#140E0A', borderColor: 'rgba(201, 164, 92, 0.2)', borderWidth: 1 }}>
-                    {objectives.map((obj, idx) => (
-                      <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8, gap: 10 }}>
-                        <CheckCircle2 color="#C9A45C" size={16} style={{ marginTop: 2 }} />
-                        <Text style={{ color: '#FFFFFF', fontSize: 13, flex: 1, lineHeight: 20 }}>{obj}</Text>
-                      </View>
-                    ))}
+                    {objectives.map((obj, idx) => {
+                      const isHeader = !obj.trim().startsWith('•') && !obj.trim().startsWith('-') && !obj.trim().startsWith('*') && idx === 0;
+                      const cleanText = obj.replace(/^[•\-\*\s]+/, '').trim();
+                      return (
+                        <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8, gap: 10 }}>
+                          {isHeader ? null : <CheckCircle2 color="#C9A45C" size={16} style={{ marginTop: 2 }} />}
+                          <HTMLText html={cleanText} style={{ color: '#FFFFFF', fontSize: 13, flex: 1, lineHeight: 20 }} />
+                        </View>
+                      );
+                    })}
                   </GlassCard>
                 )}
               </View>
@@ -601,12 +696,16 @@ export default function LessonDetailScreen() {
 
                 {openSummarySections.competencies && (
                   <GlassCard style={{ marginTop: 8, padding: 18, borderRadius: 16, backgroundColor: '#140E0A', borderColor: 'rgba(201, 164, 92, 0.2)', borderWidth: 1 }}>
-                    {competencies.map((comp, idx) => (
-                      <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8, gap: 10 }}>
-                        <ListChecks color="#C9A45C" size={16} style={{ marginTop: 2 }} />
-                        <Text style={{ color: '#FFFFFF', fontSize: 13, flex: 1, lineHeight: 20 }}>{comp}</Text>
-                      </View>
-                    ))}
+                    {competencies.map((comp, idx) => {
+                      const isHeader = !comp.trim().startsWith('•') && !comp.trim().startsWith('-') && !comp.trim().startsWith('*') && idx === 0;
+                      const cleanText = comp.replace(/^[•\-\*\s]+/, '').trim();
+                      return (
+                        <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8, gap: 10 }}>
+                          {isHeader ? null : <ListChecks color="#C9A45C" size={16} style={{ marginTop: 2 }} />}
+                          <HTMLText html={cleanText} style={{ color: '#FFFFFF', fontSize: 13, flex: 1, lineHeight: 20 }} />
+                        </View>
+                      );
+                    })}
                   </GlassCard>
                 )}
               </View>
@@ -638,11 +737,13 @@ export default function LessonDetailScreen() {
                 {openSummarySections.keyConcepts && (
                   <GlassCard style={{ marginTop: 8, padding: 18, borderRadius: 16, backgroundColor: '#140E0A', borderColor: 'rgba(201, 164, 92, 0.2)', borderWidth: 1 }}>
                     <View style={{ gap: 8 }}>
-                      {keyConcepts.map((kc, idx) => (
-                        <Text key={idx} style={{ color: '#FFFFFF', fontSize: 13, lineHeight: 20 }}>
-                          • {kc}
-                        </Text>
-                      ))}
+                      {isPrestructuredHtml(keyConcepts) ? (
+                        <HTMLText html={keyConcepts[0]} style={{ color: '#FFFFFF', fontSize: 13, lineHeight: 22 }} />
+                      ) : (
+                        keyConcepts.map((kc, idx) => (
+                          <HTMLText key={idx} html={`• ${kc}`} style={{ color: '#FFFFFF', fontSize: 13, lineHeight: 20 }} />
+                        ))
+                      )}
                     </View>
                   </GlassCard>
                 )}
@@ -676,14 +777,111 @@ export default function LessonDetailScreen() {
                   <View style={{ marginTop: 8, gap: 10 }}>
                     {glossary.map((g, idx) => (
                       <GlassCard key={idx} style={{ padding: 14, borderRadius: 14, backgroundColor: '#140E0A' }}>
-                        <Text style={{ color: '#C9A45C', fontSize: 14, fontWeight: 'bold', marginBottom: 2 }}>{g.term}</Text>
-                        <Text style={{ color: '#B0A894', fontSize: 12, lineHeight: 18 }}>{g.definition}</Text>
+                        <HTMLText html={g.term} style={{ color: '#C9A45C', fontSize: 14, fontWeight: 'bold', marginBottom: 2 }} />
+                        <HTMLText html={g.definition} style={{ color: '#B0A894', fontSize: 12, lineHeight: 18 }} />
                       </GlassCard>
                     ))}
                   </View>
                 )}
               </View>
             ) : null}
+
+            {/* SECCIÓN: BIBLIOGRAFÍA Y REFERENCIAS (Desplegable) */}
+            {bibliography.length > 0 ? (
+              <View>
+                <TouchableOpacity
+                  onPress={() => toggleSummarySectionKey('bibliography')}
+                  activeOpacity={0.85}
+                  style={{
+                    backgroundColor: '#17120D',
+                    borderRadius: 18,
+                    borderWidth: 1.5,
+                    borderColor: openSummarySections.bibliography ? '#C9A45C' : 'rgba(255, 255, 255, 0.08)',
+                    padding: 16,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: 'bold', flex: 1 }}>
+                    Bibliografía y Referencias
+                  </Text>
+                  <ChevronDown color="#B0A894" size={20} style={{ transform: [{ rotate: openSummarySections.bibliography ? '180deg' : '0deg' }] }} />
+                </TouchableOpacity>
+
+                {openSummarySections.bibliography && (
+                  <GlassCard style={{ marginTop: 8, padding: 18, borderRadius: 16, backgroundColor: '#140E0A', borderColor: 'rgba(201, 164, 92, 0.2)', borderWidth: 1 }}>
+                    {isPrestructuredHtml(bibliography) ? (
+                      <HTMLText html={bibliography[0]} style={{ color: '#B0A894', fontSize: 12, lineHeight: 18 }} />
+                    ) : (
+                      bibliography.map((b, idx) => (
+                        <HTMLText key={idx} html={formatListItem(b)} style={{ color: '#B0A894', fontSize: 12, lineHeight: 18, marginBottom: 4 }} />
+                      ))
+                    )}
+                  </GlassCard>
+                )}
+              </View>
+            ) : null}
+
+            {/* AI Assistant Card */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={{
+                backgroundColor: '#17120D',
+                borderRadius: 18,
+                borderWidth: 1,
+                borderColor: 'rgba(201, 164, 92, 0.25)',
+                padding: 16,
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginTop: 6,
+                marginBottom: 16,
+              }}
+            >
+              <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(201, 164, 92, 0.15)', alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
+                <Sparkles color="#C9A45C" size={22} />
+              </View>
+              <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: 'bold', flex: 1 }}>
+                ¿Dudas? Preguntá al asistente IA
+              </Text>
+              <ChevronRight color="#B0A894" size={20} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setCurrentSegment('practice')}
+              activeOpacity={0.85}
+              style={{
+                width: '100%',
+                backgroundColor: '#C9A45C',
+                paddingVertical: 16,
+                borderRadius: 14,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: '#C9A45C',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.5,
+                shadowRadius: 12,
+                elevation: 6,
+              }}
+            >
+              <Text style={{ color: '#0C0A07', fontWeight: 'bold', fontSize: 16, marginRight: 8 }}>
+                Continuar a la práctica
+              </Text>
+              <ArrowRight color="#0C0A07" size={20} />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* SEGMENT 3: PRÁCTICA (CASO PRÁCTICO Y ACTIVIDAD PRÁCTICA GUIADA) */}
+        {currentSegment === 'practice' && (
+          <View style={{ gap: 14 }}>
+            {/* Header */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <Text style={{ color: '#C9A45C', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1 }}>
+                Fase de Aplicación Práctica
+              </Text>
+            </View>
 
             {/* SECCIÓN: CASO PRÁCTICO (Desplegable) */}
             {practicalCase ? (
@@ -710,11 +908,15 @@ export default function LessonDetailScreen() {
 
                 {openSummarySections.practicalCase && (
                   <GlassCard style={{ marginTop: 8, padding: 18, borderRadius: 16, backgroundColor: '#140E0A', borderColor: 'rgba(201, 164, 92, 0.2)', borderWidth: 1 }}>
-                    <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 'bold', marginBottom: 6 }}>{practicalCase.title}</Text>
-                    <Text style={{ color: '#B0A894', fontSize: 13, lineHeight: 20, marginBottom: 12 }}>{practicalCase.description}</Text>
-                    {practicalCase.questions?.map((q, idx) => (
-                      <Text key={idx} style={{ color: '#FFFFFF', fontSize: 12, marginBottom: 4 }}>• {q}</Text>
-                    ))}
+                    <HTMLText html={practicalCase.title} style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 'bold', marginBottom: 6 }} />
+                    <HTMLText html={practicalCase.description} style={{ color: '#B0A894', fontSize: 13, lineHeight: 20, marginBottom: 12 }} />
+                    {isPrestructuredHtml(practicalCase.questions || []) ? (
+                      <HTMLText html={practicalCase.questions?.[0] || ''} style={{ color: '#FFFFFF', fontSize: 12 }} />
+                    ) : (
+                      cleanList(practicalCase.questions).map((q, idx) => (
+                        <HTMLText key={idx} html={formatListItem(q)} style={{ color: '#FFFFFF', fontSize: 12, marginBottom: 4 }} />
+                      ))
+                    )}
                   </GlassCard>
                 )}
               </View>
@@ -745,80 +947,8 @@ export default function LessonDetailScreen() {
 
                 {openSummarySections.practicalActivity && (
                   <GlassCard style={{ marginTop: 8, padding: 18, borderRadius: 16, backgroundColor: '#140E0A', borderColor: 'rgba(201, 164, 92, 0.2)', borderWidth: 1 }}>
-                    <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>
-                      {practicalActivity.title}
-                    </Text>
-                    <Text style={{ color: '#B0A894', fontSize: 13, lineHeight: 20 }}>
-                      {practicalActivity.instructions}
-                    </Text>
-                  </GlassCard>
-                )}
-              </View>
-            ) : null}
-
-            {/* SECCIÓN: CONCLUSIÓN (Desplegable) */}
-            {moduleData?.conclusionText ? (
-              <View>
-                <TouchableOpacity
-                  onPress={() => toggleSummarySectionKey('conclusion')}
-                  activeOpacity={0.85}
-                  style={{
-                    backgroundColor: '#17120D',
-                    borderRadius: 18,
-                    borderWidth: 1.5,
-                    borderColor: openSummarySections.conclusion ? '#C9A45C' : 'rgba(255, 255, 255, 0.08)',
-                    padding: 16,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: 'bold', flex: 1 }}>
-                    Conclusión
-                  </Text>
-                  <ChevronDown color="#B0A894" size={20} style={{ transform: [{ rotate: openSummarySections.conclusion ? '180deg' : '0deg' }] }} />
-                </TouchableOpacity>
-
-                {openSummarySections.conclusion && (
-                  <GlassCard style={{ marginTop: 8, padding: 18, borderRadius: 16, backgroundColor: '#140E0A', borderColor: 'rgba(201, 164, 92, 0.2)', borderWidth: 1 }}>
-                    <Text style={{ color: '#FFFFFF', fontSize: 13, lineHeight: 22 }}>
-                      {moduleData.conclusionText}
-                    </Text>
-                  </GlassCard>
-                )}
-              </View>
-            ) : null}
-
-            {/* SECCIÓN: BIBLIOGRAFÍA Y REFERENCIAS (Desplegable) */}
-            {bibliography.length > 0 ? (
-              <View>
-                <TouchableOpacity
-                  onPress={() => toggleSummarySectionKey('bibliography')}
-                  activeOpacity={0.85}
-                  style={{
-                    backgroundColor: '#17120D',
-                    borderRadius: 18,
-                    borderWidth: 1.5,
-                    borderColor: openSummarySections.bibliography ? '#C9A45C' : 'rgba(255, 255, 255, 0.08)',
-                    padding: 16,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: 'bold', flex: 1 }}>
-                    Bibliografía y Referencias
-                  </Text>
-                  <ChevronDown color="#B0A894" size={20} style={{ transform: [{ rotate: openSummarySections.bibliography ? '180deg' : '0deg' }] }} />
-                </TouchableOpacity>
-
-                {openSummarySections.bibliography && (
-                  <GlassCard style={{ marginTop: 8, padding: 18, borderRadius: 16, backgroundColor: '#140E0A', borderColor: 'rgba(201, 164, 92, 0.2)', borderWidth: 1 }}>
-                    {bibliography.map((b, idx) => (
-                      <Text key={idx} style={{ color: '#B0A894', fontSize: 12, lineHeight: 18, marginBottom: 4 }}>
-                        • {b}
-                      </Text>
-                    ))}
+                    <HTMLText html={practicalActivity.title} style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 'bold', marginBottom: 4 }} />
+                    <HTMLText html={practicalActivity.instructions} style={{ color: '#B0A894', fontSize: 13, lineHeight: 20 }} />
                   </GlassCard>
                 )}
               </View>
@@ -874,7 +1004,7 @@ export default function LessonDetailScreen() {
           </View>
         )}
 
-        {/* SEGMENT 3: AUTOEVALUACIÓN DE LA CLASE */}
+        {/* SEGMENT 4: AUTOEVALUACIÓN DE LA CLASE */}
         {currentSegment === 'eval' && (
           <GlassCard style={{ padding: 24, borderRadius: 24, backgroundColor: '#17120D', alignItems: 'center' }}>
             <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(201, 164, 92, 0.15)', borderWidth: 1.5, borderColor: '#C9A45C', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
@@ -890,7 +1020,7 @@ export default function LessonDetailScreen() {
             </Text>
 
             <TouchableOpacity
-              onPress={() => router.push(`/quiz/${evaluationId}`)}
+              onPress={() => router.push(`/quiz/${moduleData?.id}`)}
               activeOpacity={0.85}
               style={{
                 width: '100%',

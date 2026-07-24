@@ -94,4 +94,35 @@ export const storage = {
       console.error('Error guardando estado de onboarding:', e);
     }
   },
+
+  async getCompletedModules(): Promise<string[]> {
+    try {
+      let dataStr: string | null = null;
+      if (Platform.OS === 'web') {
+        dataStr = localStorage.getItem('iltct_completed_modules');
+      } else {
+        dataStr = await SecureStore.getItemAsync('iltct_completed_modules');
+      }
+      return dataStr ? JSON.parse(dataStr) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  async addCompletedModule(moduleId: string): Promise<void> {
+    try {
+      const completed = await this.getCompletedModules();
+      if (!completed.includes(moduleId)) {
+        completed.push(moduleId);
+        const dataStr = JSON.stringify(completed);
+        if (Platform.OS === 'web') {
+          localStorage.setItem('iltct_completed_modules', dataStr);
+          return;
+        }
+        await SecureStore.setItemAsync('iltct_completed_modules', dataStr);
+      }
+    } catch (e) {
+      console.error('Error guardando modulo completado:', e);
+    }
+  },
 };

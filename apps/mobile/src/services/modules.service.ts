@@ -70,6 +70,7 @@ export interface TheoreticalModule {
     avatarVideoUrl?: string;
     isMarianaClone?: boolean;
   };
+  status?: 'PUBLISHED' | 'DRAFT' | 'INACTIVE';
   evaluations?: EvaluationItem[];
 }
 
@@ -90,8 +91,10 @@ export async function getTheoreticalModules(token: string, forceRefresh = false)
     return cachedModules;
   }
   const data = await fetchClient<TheoreticalModule[]>('/modules/theory', { method: 'GET' }, token);
-  cachedModules = data;
-  return data;
+  // Filtrar solo los publicados
+  const publishedData = (data || []).filter(m => m.status === 'PUBLISHED');
+  cachedModules = publishedData;
+  return publishedData;
 }
 
 export async function getModuleById(moduleId: string, token: string): Promise<TheoreticalModule> {

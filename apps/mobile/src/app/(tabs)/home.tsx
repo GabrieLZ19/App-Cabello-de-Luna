@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
+import { useRouter, useNavigation } from "expo-router";
 import { GlassCard } from "@/components/GlassCard";
 import { AvatarRing } from "@/components/AvatarRing";
 import { CircularProgress } from "@/components/CircularProgress";
@@ -24,34 +25,54 @@ import { getTheoreticalModules, storage, TheoreticalModule } from "@/services";
 
 export default function HomeScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
+  const navigation = useNavigation();
   const [userData, setUserData] = useState<any>(null);
   const [currentModule, setCurrentModule] = useState<TheoreticalModule | null>(
     null,
   );
+  const [progressPercent, setProgressPercent] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
 
-  useEffect(() => {
-    async function loadDashboard() {
-      try {
-        const storedUser = await storage.getUserData();
-        if (storedUser) {
-          setUserData(storedUser);
-        }
-
-        const modules = await getTheoreticalModules("");
-        if (modules && modules.length > 0) {
-          setCurrentModule(modules[0]);
-        }
-      } catch (err) {
-        console.error("Error cargando datos del dashboard:", err);
-      } finally {
-        setLoading(false);
+  const loadDashboard = async () => {
+    try {
+      const storedUser = await storage.getUserData();
+      if (storedUser) {
+        setUserData(storedUser);
       }
-    }
 
+      const modules = await getTheoreticalModules("");
+      const completed = await storage.getCompletedModules();
+
+      if (modules && modules.length > 0) {
+        const uncompleted =
+          modules.find((m) => !completed.includes(m.id)) ||
+          modules[modules.length - 1];
+        setCurrentModule(uncompleted);
+
+        const percent = Math.round(
+          (completed.filter((id) => modules.some((m) => m.id === id)).length /
+            modules.length) *
+            100,
+        );
+        setProgressPercent(percent);
+      }
+    } catch (err) {
+      console.error("Error cargando datos del dashboard:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadDashboard();
-  }, []);
+
+    const unsubscribe = navigation.addListener("focus", () => {
+      loadDashboard();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const userName = userData?.fullName || "Ana Sofía López";
 
@@ -164,7 +185,11 @@ export default function HomeScreen() {
 
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             {/* Circular Progress Ring on Left */}
-            <CircularProgress percentage={20} size={84} strokeWidth={8} />
+            <CircularProgress
+              percentage={progressPercent}
+              size={84}
+              strokeWidth={8}
+            />
 
             {/* Right Side Progress Details */}
             <View style={{ flex: 1, marginLeft: 20 }}>
@@ -187,7 +212,7 @@ export default function HomeScreen() {
                       fontWeight: "bold",
                     }}
                   >
-                    20%
+                    {progressPercent}%
                   </Text>
                 </View>
                 <View
@@ -200,7 +225,7 @@ export default function HomeScreen() {
                 >
                   <View
                     style={{
-                      width: "20%",
+                      width: `${progressPercent}%`,
                       height: "100%",
                       backgroundColor: "#C9A45C",
                       borderRadius: 3,
@@ -239,7 +264,11 @@ export default function HomeScreen() {
         </Text>
 
         {/* Premium Luxury Weekly Module Card with LinearGradient and Subtle Gold Glow */}
-        <View
+        <TouchableOpacity
+          onPress={() =>
+            currentModule && router.push(`/lesson/${currentModule.id}`)
+          }
+          activeOpacity={0.9}
           style={{
             borderRadius: 24,
             borderWidth: 1.5,
@@ -375,42 +404,40 @@ export default function HomeScreen() {
                   </View>
 
                   {/* Circular Gold Neon Play Button with Dual Halo Glow */}
-                  <TouchableOpacity activeOpacity={0.85}>
-                    <View
+                  <View
+                    style={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: 26,
+                      backgroundColor: "rgba(201, 164, 92, 0.2)",
+                      borderWidth: 1,
+                      borderColor: "rgba(201, 164, 92, 0.4)",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <LinearGradient
+                      colors={["#F3D99A", "#C9A45C", "#A8823B"]}
                       style={{
-                        width: 52,
-                        height: 52,
-                        borderRadius: 26,
-                        backgroundColor: "rgba(201, 164, 92, 0.2)",
-                        borderWidth: 1,
-                        borderColor: "rgba(201, 164, 92, 0.4)",
+                        width: 44,
+                        height: 44,
+                        borderRadius: 22,
                         alignItems: "center",
                         justifyContent: "center",
                       }}
                     >
-                      <LinearGradient
-                        colors={["#F3D99A", "#C9A45C", "#A8823B"]}
-                        style={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: 22,
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Play
-                          color="#0C0A07"
-                          size={20}
-                          style={{ marginLeft: 2 }}
-                        />
-                      </LinearGradient>
-                    </View>
-                  </TouchableOpacity>
+                      <Play
+                        color="#0C0A07"
+                        size={20}
+                        style={{ marginLeft: 2 }}
+                      />
+                    </LinearGradient>
+                  </View>
                 </View>
               </>
             )}
           </LinearGradient>
-        </View>
+        </TouchableOpacity>
 
         {/* Section 3: "Herramientas" (Restored Previous Perfect Design) */}
         <Text

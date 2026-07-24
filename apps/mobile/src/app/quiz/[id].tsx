@@ -9,7 +9,7 @@ import { getModuleById, submitQuiz, TheoreticalModule, QuizResult, storage } fro
 export default function QuizScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
-  const evaluationId = (id as string) || 'eval-1';
+  const moduleId = id as string;
 
   const [moduleData, setModuleData] = useState<TheoreticalModule | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,7 +32,7 @@ export default function QuizScreen() {
     async function loadData() {
       try {
         const token = await storage.getToken();
-        const data = await getModuleById('mod-1', token || '');
+        const data = await getModuleById(moduleId, token || '');
         setModuleData(data);
       } catch (err) {
         console.error('Error cargando preguntas del cuestionario:', err);
@@ -41,7 +41,7 @@ export default function QuizScreen() {
       }
     }
     loadData();
-  }, []);
+  }, [moduleId]);
 
   const formatTimer = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -69,6 +69,9 @@ export default function QuizScreen() {
         const token = await storage.getToken();
         const answersArray = questions.map((_, idx) => selectedAnswers[idx] ?? 0);
         const res = await submitQuiz(evaluation?.id || 'eval-1', answersArray, token || '');
+        if (res.passed) {
+          await storage.addCompletedModule(moduleId);
+        }
         setQuizResult(res);
       } catch (err: any) {
         console.error('Error al enviar examen:', err);
