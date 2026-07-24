@@ -32,6 +32,12 @@
         }
       ]
     ],
-    "scheme": "iltct"
+    "scheme": "iltct",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "20f9539f-c821-48ba-8fdd-02c711363ef2"
+      }
+    }
   }
 }
