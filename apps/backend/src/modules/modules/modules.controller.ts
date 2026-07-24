@@ -11,6 +11,7 @@ import {
   HttpStatus,
   UseInterceptors,
   UploadedFile,
+  UseGuards,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import {
@@ -18,11 +19,18 @@ import {
   ApiOperation,
   ApiResponse,
   ApiConsumes,
+  ApiBearerAuth,
 } from "@nestjs/swagger";
 import { ModulesService } from "./modules.service";
 import { PDFParse } from "pdf-parse";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { RolesGuard } from "../auth/roles.guard";
+import { Roles } from "../auth/roles.decorator";
+import { Role } from "@prisma/client";
 
 @ApiTags("Módulos Teóricos")
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller("modules/theory")
 export class ModulesController {
   constructor(private readonly modulesService: ModulesService) {}
@@ -44,6 +52,7 @@ export class ModulesController {
   }
 
   @Post("parse-pdf")
+  @Roles(Role.ADMIN)
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(FileInterceptor("file"))
   @ApiOperation({
@@ -76,12 +85,14 @@ export class ModulesController {
   }
 
   @Post()
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: "Crear nueva clase teórica" })
   async createModule(@Body() body: any) {
     return this.modulesService.createTheoreticalModule(body);
   }
 
   @Put(":id")
+  @Roles(Role.ADMIN)
   @ApiOperation({
     summary: "Actualizar clase teórica y guardar visibilidad de secciones",
   })
@@ -90,6 +101,7 @@ export class ModulesController {
   }
 
   @Delete(":id")
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: "Eliminar una clase teórica de Supabase" })
   async deleteModule(@Param("id") id: string) {
     return this.modulesService.deleteTheoreticalModule(id);
@@ -111,3 +123,4 @@ export class ModulesController {
     );
   }
 }
+

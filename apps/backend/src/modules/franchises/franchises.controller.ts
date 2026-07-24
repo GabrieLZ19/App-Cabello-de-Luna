@@ -1,8 +1,15 @@
-import { Controller, Get, Post, Put, Param, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Put, Param, Body, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { FranchisesService } from './franchises.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '@prisma/client';
 
 @ApiTags('Franquicias')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
 @Controller('franchises')
 export class FranchisesController {
   constructor(private readonly franchisesService: FranchisesService) {}
@@ -31,3 +38,4 @@ export class FranchisesController {
     return this.franchisesService.updateFranchise(id, body);
   }
 }
+
