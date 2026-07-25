@@ -13,13 +13,15 @@ export default function FinancesPage() {
 
   if (!isAdmin) {
     return (
-      <div className="p-8 flex items-center justify-center min-h-[70vh]">
-        <div className="bg-[#15100A] border border-red-500/30 rounded-2xl p-8 max-w-md text-center space-y-4">
-          <Lock className="w-12 h-12 text-red-400 mx-auto" />
-          <h2 className="text-xl font-bold text-white">Acceso Restringido</h2>
+      <div className="p-4 sm:p-8 flex items-center justify-center min-h-[70vh]">
+        <div className="bg-[#15100A] border border-red-500/30 rounded-2xl p-6 sm:p-8 max-w-md text-center space-y-4">
+          <Lock className="w-10 h-10 sm:w-12 sm:h-12 text-red-400 mx-auto" />
+          <h2 className="text-lg sm:text-xl font-bold text-white">
+            Acceso Restringido
+          </h2>
           <p className="text-xs text-[#B0A894]">
             Tu rol como Asistente ({user?.name}) no posee permisos para
-            consultar la información financiera del instituto.
+            consultar la información financiera.
           </p>
         </div>
       </div>
@@ -27,14 +29,14 @@ export default function FinancesPage() {
   }
 
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex justify-between items-center bg-[#15100A] p-6 rounded-2xl border border-white/10">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6">
+      <div className="flex justify-between items-center bg-[#15100A] p-4 sm:p-6 rounded-2xl border border-white/10">
         <div>
-          <h2 className="text-xl font-bold text-white">
-            Finanzas y Recaudación de Franquicias
+          <h2 className="text-lg sm:text-xl font-bold text-white">
+            Finanzas y Recaudación
           </h2>
           <p className="text-xs text-[#B0A894] mt-1">
-            Registro contable de matriculaciones y colegiaturas{" "}
+            Registro contable de matriculaciones y colegiaturas
           </p>
         </div>
       </div>

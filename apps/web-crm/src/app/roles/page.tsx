@@ -11,7 +11,11 @@ import {
   UserCheck2 as UserCheck2Icon,
 } from "lucide-react";
 import CustomAlert, { AlertType } from "../../components/CustomAlert";
-import { getCRMStaff, createCRMUser, updateCRMUser } from "@/services/userService";
+import {
+  getCRMStaff,
+  createCRMUser,
+  updateCRMUser,
+} from "@/services/userService";
 
 const ShieldCheck: any = ShieldCheckIcon;
 const Plus: any = PlusIcon;
@@ -26,12 +30,10 @@ export default function RolesPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
 
-  // Custom Alert State
   const [alertConfig, setAlertConfig] = useState<{
     isOpen: boolean;
     type: AlertType;
@@ -138,14 +140,14 @@ export default function RolesPage() {
       isOpen: true,
       type: isCurrentlyActive ? "warning" : "info",
       title: `¿${actionText.toUpperCase()} USUARIO STAFF?`,
-      message: `¿Estás seguro de que deseas ${actionText} el acceso al sistema para ${user.fullName}?`,
-      confirmText: isCurrentlyActive
-        ? "Deshabilitar Acceso"
-        : "Reactivar Acceso",
+      message: `¿Estás seguro de que deseas ${actionText} el acceso para ${user.fullName}?`,
+      confirmText: isCurrentlyActive ? "Deshabilitar" : "Reactivar",
       showCancel: true,
       onConfirm: async () => {
         try {
-          const res = await updateCRMUser(user.id, { enrollmentStatus: newStatus });
+          const res = await updateCRMUser(user.id, {
+            enrollmentStatus: newStatus,
+          });
 
           if (res.ok) {
             await fetchStaffUsers();
@@ -175,8 +177,7 @@ export default function RolesPage() {
   );
 
   return (
-    <div className="p-8 space-y-6">
-      {/* Custom Alert */}
+    <div className="p-4 sm:p-6 md:p-8 space-y-6">
       <CustomAlert
         isOpen={alertConfig.isOpen}
         type={alertConfig.type}
@@ -191,18 +192,17 @@ export default function RolesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
             Gestión de Roles Administrativos
           </h1>
           <p className="text-xs text-[#B0A894] mt-1">
-            Administración de permisos y accesos para el equipo interno
-            (Directores, Asistentes y Soporte).
+            Permisos para el equipo interno (Directores, Asistentes y Soporte).
           </p>
         </div>
 
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="bg-[#C9A45C] hover:bg-[#b5924d] text-black font-bold px-4 py-2.5 rounded-xl text-xs flex items-center space-x-2 transition-all shadow-md"
+          className="w-full sm:w-auto bg-[#C9A45C] hover:bg-[#b5924d] text-black font-bold px-4 py-3 rounded-xl text-xs flex items-center justify-center space-x-2 transition-all shadow-md"
         >
           <Plus className="w-4 h-4" />
           <span>Nuevo Usuario Staff</span>
@@ -221,11 +221,11 @@ export default function RolesPage() {
         />
       </div>
 
-      {/* Staff Users Table */}
-      <div className="glass-panel p-6">
+      {/* Staff Container */}
+      <div className="glass-panel p-4 sm:p-6">
         <h3 className="text-xs font-bold text-[#C9A45C] uppercase tracking-wider mb-4 flex items-center space-x-2">
           <ShieldCheck className="w-4 h-4 text-[#C9A45C]" />
-          <span>Personal de Administración y Soporte</span>
+          <span>Personal Administrativo ({filteredStaff.length})</span>
         </h3>
 
         {loading ? (
@@ -233,7 +233,7 @@ export default function RolesPage() {
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-12 bg-white/5 rounded-xl animate-pulse"
+                className="h-20 bg-white/5 rounded-xl animate-pulse"
               />
             ))}
           </div>
@@ -245,95 +245,181 @@ export default function RolesPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-white/10 text-xs text-gray-400 uppercase tracking-wider">
-                  <th className="pb-3">Personal</th>
-                  <th className="pb-3">Correo Electrónico</th>
-                  <th className="pb-3">Rol Asignado</th>
-                  <th className="pb-3">Estado</th>
-                  <th className="pb-3 text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {filteredStaff.map((u) => {
-                  const isActive = u.enrollmentStatus !== "SUSPENDED";
-                  return (
-                    <tr key={u.id} className="hover:bg-white/5 transition-all">
-                      <td className="py-4 font-bold text-white text-xs">
-                        {u.fullName}
-                      </td>
-                      <td className="py-4 text-xs text-gray-300">{u.email}</td>
-                      <td className="py-4 text-xs">
-                        <span
-                          className={`px-3 py-1 rounded-full text-[11px] font-bold ${
-                            u.role === "ADMIN"
-                              ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
-                              : u.role === "ASSISTANT"
-                                ? "bg-[#C9A45C]/20 text-[#C9A45C] border border-[#C9A45C]/30"
-                                : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
-                          }`}
-                        >
-                          {u.role}
+          <>
+            {/* VISTA MÓVIL (CARDS) */}
+            <div className="grid grid-cols-1 gap-4 md:hidden">
+              {filteredStaff.map((u) => {
+                const isActive = u.enrollmentStatus !== "SUSPENDED";
+                return (
+                  <div
+                    key={u.id}
+                    className="bg-[#15100A] border border-white/10 rounded-2xl p-4 space-y-3 shadow-lg"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="font-bold text-white text-sm">
+                          {u.fullName}
+                        </h4>
+                        <p className="text-xs text-gray-400">{u.email}</p>
+                      </div>
+                      {isActive ? (
+                        <span className="text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20 text-[9px] font-bold">
+                          HABILITADO
                         </span>
-                      </td>
-                      <td className="py-4 text-xs">
-                        {isActive ? (
-                          <span className="text-green-400 bg-green-500/10 px-2.5 py-1 rounded-full border border-green-500/20 text-[10px] font-bold">
-                            HABILITADO
-                          </span>
-                        ) : (
-                          <span className="text-red-400 bg-red-500/10 px-2.5 py-1 rounded-full border border-red-500/20 text-[10px] font-bold">
-                            DESHABILITADO
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-4 text-xs text-right space-x-2">
-                        <button
-                          onClick={() => {
-                            setSelectedUser(u);
-                            setIsEditModalOpen(true);
-                          }}
-                          className="bg-white/10 hover:bg-[#C9A45C] hover:text-black text-white px-3 py-1.5 rounded-lg font-bold transition-all text-[11px] inline-flex items-center space-x-1"
-                        >
-                          <Edit2 className="w-3 h-3" />
-                          <span>Editar</span>
-                        </button>
+                      ) : (
+                        <span className="text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20 text-[9px] font-bold">
+                          DESHABILITADO
+                        </span>
+                      )}
+                    </div>
 
-                        <button
-                          onClick={() => handleToggleDisableStaff(u)}
-                          className={`px-3 py-1.5 rounded-lg font-bold transition-all text-[11px] inline-flex items-center space-x-1 border ${
-                            isActive
-                              ? "bg-amber-500/20 hover:bg-amber-500 hover:text-black text-amber-300 border-amber-500/30"
-                              : "bg-green-500/20 hover:bg-green-500 hover:text-black text-green-300 border-green-500/30"
-                          }`}
-                        >
+                    <div className="flex items-center justify-between text-xs pt-1 border-t border-white/5">
+                      <span className="text-[11px] text-gray-400 font-medium">
+                        Rol:
+                      </span>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                          u.role === "ADMIN"
+                            ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                            : u.role === "ASSISTANT"
+                              ? "bg-[#C9A45C]/20 text-[#C9A45C] border border-[#C9A45C]/30"
+                              : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                        }`}
+                      >
+                        {u.role}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10">
+                      <button
+                        onClick={() => {
+                          setSelectedUser(u);
+                          setIsEditModalOpen(true);
+                        }}
+                        className="w-full bg-white/10 hover:bg-[#C9A45C] hover:text-black text-white py-2 rounded-xl font-bold transition-all text-xs flex items-center justify-center space-x-1.5"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                        <span>Editar</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleToggleDisableStaff(u)}
+                        className={`w-full py-2 rounded-xl font-bold transition-all text-xs flex items-center justify-center space-x-1.5 border ${
+                          isActive
+                            ? "bg-amber-500/20 hover:bg-amber-500 hover:text-black text-amber-300 border-amber-500/30"
+                            : "bg-green-500/20 hover:bg-green-500 hover:text-black text-green-300 border-green-500/30"
+                        }`}
+                      >
+                        {isActive ? (
+                          <UserX className="w-3.5 h-3.5" />
+                        ) : (
+                          <UserCheck2 className="w-3.5 h-3.5" />
+                        )}
+                        <span>{isActive ? "Deshabilitar" : "Habilitar"}</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* VISTA DESKTOP (TABLA) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 text-xs text-gray-400 uppercase tracking-wider">
+                    <th className="pb-3">Personal</th>
+                    <th className="pb-3">Correo Electrónico</th>
+                    <th className="pb-3">Rol Asignado</th>
+                    <th className="pb-3">Estado</th>
+                    <th className="pb-3 text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {filteredStaff.map((u) => {
+                    const isActive = u.enrollmentStatus !== "SUSPENDED";
+                    return (
+                      <tr
+                        key={u.id}
+                        className="hover:bg-white/5 transition-all"
+                      >
+                        <td className="py-4 font-bold text-white text-xs">
+                          {u.fullName}
+                        </td>
+                        <td className="py-4 text-xs text-gray-300">
+                          {u.email}
+                        </td>
+                        <td className="py-4 text-xs">
+                          <span
+                            className={`px-3 py-1 rounded-full text-[11px] font-bold ${
+                              u.role === "ADMIN"
+                                ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                                : u.role === "ASSISTANT"
+                                  ? "bg-[#C9A45C]/20 text-[#C9A45C] border border-[#C9A45C]/30"
+                                  : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                            }`}
+                          >
+                            {u.role}
+                          </span>
+                        </td>
+                        <td className="py-4 text-xs">
                           {isActive ? (
-                            <UserX className="w-3 h-3" />
+                            <span className="text-green-400 bg-green-500/10 px-2.5 py-1 rounded-full border border-green-500/20 text-[10px] font-bold">
+                              HABILITADO
+                            </span>
                           ) : (
-                            <UserCheck2 className="w-3 h-3" />
+                            <span className="text-red-400 bg-red-500/10 px-2.5 py-1 rounded-full border border-red-500/20 text-[10px] font-bold">
+                              DESHABILITADO
+                            </span>
                           )}
-                          <span>{isActive ? "Deshabilitar" : "Habilitar"}</span>
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        </td>
+                        <td className="py-4 text-xs text-right space-x-2">
+                          <button
+                            onClick={() => {
+                              setSelectedUser(u);
+                              setIsEditModalOpen(true);
+                            }}
+                            className="bg-white/10 hover:bg-[#C9A45C] hover:text-black text-white px-3 py-1.5 rounded-lg font-bold transition-all text-[11px] inline-flex items-center space-x-1"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                            <span>Editar</span>
+                          </button>
+                          <button
+                            onClick={() => handleToggleDisableStaff(u)}
+                            className={`px-3 py-1.5 rounded-lg font-bold transition-all text-[11px] inline-flex items-center space-x-1 border ${
+                              isActive
+                                ? "bg-amber-500/20 hover:bg-amber-500 hover:text-black text-amber-300 border-amber-500/30"
+                                : "bg-green-500/20 hover:bg-green-500 hover:text-black text-green-300 border-green-500/30"
+                            }`}
+                          >
+                            {isActive ? (
+                              <UserX className="w-3 h-3" />
+                            ) : (
+                              <UserCheck2 className="w-3 h-3" />
+                            )}
+                            <span>
+                              {isActive ? "Deshabilitar" : "Habilitar"}
+                            </span>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
       {/* Modal: Crear Usuario Staff */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#15100A] border border-white/10 rounded-2xl p-6 w-full max-w-md space-y-5 shadow-2xl">
-            <h3 className="text-lg font-bold text-white">
+          <div className="bg-[#15100A] border border-white/10 rounded-2xl p-5 sm:p-6 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl">
+            <h3 className="text-base font-bold text-white">
               Registrar Usuario Staff
             </h3>
-            <form onSubmit={handleCreateStaff} className="space-y-4">
+            <form onSubmit={handleCreateStaff} className="space-y-3">
               <div>
                 <label className="block text-xs text-gray-400 mb-1">
                   Nombre Completo
@@ -345,7 +431,7 @@ export default function RolesPage() {
                   onChange={(e) =>
                     setNewUser({ ...newUser, fullName: e.target.value })
                   }
-                  className="w-full bg-[#0C0A07] border border-white/10 rounded-xl p-3 text-xs text-white focus:border-[#C9A45C] outline-none"
+                  className="w-full bg-[#0C0A07] border border-white/10 rounded-xl p-2.5 text-xs text-white focus:border-[#C9A45C] outline-none"
                 />
               </div>
 
@@ -360,7 +446,7 @@ export default function RolesPage() {
                   onChange={(e) =>
                     setNewUser({ ...newUser, email: e.target.value })
                   }
-                  className="w-full bg-[#0C0A07] border border-white/10 rounded-xl p-3 text-xs text-white focus:border-[#C9A45C] outline-none"
+                  className="w-full bg-[#0C0A07] border border-white/10 rounded-xl p-2.5 text-xs text-white focus:border-[#C9A45C] outline-none"
                 />
               </div>
 
@@ -376,7 +462,7 @@ export default function RolesPage() {
                   onChange={(e) =>
                     setNewUser({ ...newUser, password: e.target.value })
                   }
-                  className="w-full bg-[#0C0A07] border border-white/10 rounded-xl p-3 text-xs text-white focus:border-[#C9A45C] outline-none"
+                  className="w-full bg-[#0C0A07] border border-white/10 rounded-xl p-2.5 text-xs text-white focus:border-[#C9A45C] outline-none"
                 />
               </div>
 
@@ -389,7 +475,7 @@ export default function RolesPage() {
                   onChange={(e) =>
                     setNewUser({ ...newUser, role: e.target.value })
                   }
-                  className="w-full bg-[#0C0A07] border border-white/10 rounded-xl p-3 text-xs text-white focus:border-[#C9A45C] outline-none"
+                  className="w-full bg-[#0C0A07] border border-white/10 rounded-xl p-2.5 text-xs text-white focus:border-[#C9A45C] outline-none"
                 >
                   <option value="ADMIN">ADMIN (Acceso Total)</option>
                   <option value="ASSISTANT">
@@ -399,19 +485,19 @@ export default function RolesPage() {
                 </select>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-4">
+              <div className="flex justify-end space-x-2 pt-3 border-t border-white/10">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#C9A45C] hover:bg-[#b5924d] text-black font-bold px-5 py-2.5 rounded-xl text-xs"
+                  className="bg-[#C9A45C] hover:bg-[#b5924d] text-black font-bold px-5 py-2 rounded-xl text-xs"
                 >
-                  Guardar Staff
+                  Guardar
                 </button>
               </div>
             </form>
@@ -422,11 +508,11 @@ export default function RolesPage() {
       {/* Modal: Editar Usuario Staff */}
       {isEditModalOpen && selectedUser && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#15100A] border border-white/10 rounded-2xl p-6 w-full max-w-md space-y-5 shadow-2xl">
-            <h3 className="text-lg font-bold text-white">
+          <div className="bg-[#15100A] border border-white/10 rounded-2xl p-5 sm:p-6 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl">
+            <h3 className="text-base font-bold text-white">
               Editar Permisos de Usuario
             </h3>
-            <form onSubmit={handleUpdateRole} className="space-y-4">
+            <form onSubmit={handleUpdateRole} className="space-y-3">
               <div>
                 <label className="block text-xs text-gray-400 mb-1">
                   Nombre Completo
@@ -440,7 +526,7 @@ export default function RolesPage() {
                       fullName: e.target.value,
                     })
                   }
-                  className="w-full bg-[#0C0A07] border border-white/10 rounded-xl p-3 text-xs text-white focus:border-[#C9A45C] outline-none"
+                  className="w-full bg-[#0C0A07] border border-white/10 rounded-xl p-2.5 text-xs text-white focus:border-[#C9A45C] outline-none"
                 />
               </div>
 
@@ -453,7 +539,7 @@ export default function RolesPage() {
                   onChange={(e) =>
                     setSelectedUser({ ...selectedUser, role: e.target.value })
                   }
-                  className="w-full bg-[#0C0A07] border border-white/10 rounded-xl p-3 text-xs text-white focus:border-[#C9A45C] outline-none"
+                  className="w-full bg-[#0C0A07] border border-white/10 rounded-xl p-2.5 text-xs text-white focus:border-[#C9A45C] outline-none"
                 >
                   <option value="ADMIN">ADMIN</option>
                   <option value="ASSISTANT">ASSISTANT</option>
@@ -461,19 +547,19 @@ export default function RolesPage() {
                 </select>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-4">
+              <div className="flex justify-end space-x-2 pt-3 border-t border-white/10">
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#C9A45C] hover:bg-[#b5924d] text-black font-bold px-5 py-2.5 rounded-xl text-xs"
+                  className="bg-[#C9A45C] hover:bg-[#b5924d] text-black font-bold px-5 py-2 rounded-xl text-xs"
                 >
-                  Actualizar Rol
+                  Actualizar
                 </button>
               </div>
             </form>

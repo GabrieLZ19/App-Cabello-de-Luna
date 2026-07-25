@@ -8,13 +8,6 @@ import {
   Edit3 as Edit3Icon,
 } from "lucide-react";
 
-const Bold: any = BoldIcon;
-const Italic: any = ItalicIcon;
-const List: any = ListIcon;
-const ListOrdered: any = ListOrderedIcon;
-const Eye: any = EyeIcon;
-const Edit3: any = Edit3Icon;
-
 interface RichTextAreaProps {
   label: string;
   sublabel?: string;
@@ -25,6 +18,13 @@ interface RichTextAreaProps {
   placeholder?: string;
   className?: string;
 }
+
+const Bold: any = BoldIcon;
+const Italic: any = ItalicIcon;
+const List: any = ListIcon;
+const ListOrdered: any = ListOrderedIcon;
+const Eye: any = EyeIcon;
+const Edit3: any = Edit3Icon;
 
 export function RichTextArea({
   label,
@@ -39,10 +39,8 @@ export function RichTextArea({
   const editorRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
 
-  // Mantener sincronizado el HTML editable con el prop `value`
   useEffect(() => {
     if (editorRef.current) {
-      // Si el contenido editado en el DOM difiere del prop, actualizamos el innerHTML
       if (editorRef.current.innerHTML !== (value || "")) {
         editorRef.current.innerHTML = value || "";
       }
@@ -55,7 +53,10 @@ export function RichTextArea({
     }
   };
 
-  const execCommand = (command: string, arg: string | undefined = undefined) => {
+  const execCommand = (
+    command: string,
+    arg: string | undefined = undefined,
+  ) => {
     if (activeTab !== "edit") return;
     document.execCommand(command, false, arg);
     if (editorRef.current) {
@@ -66,14 +67,16 @@ export function RichTextArea({
 
   return (
     <div className={`space-y-1.5 ${className}`}>
-      <div className="flex items-center justify-between">
-        <label className="text-xs font-bold text-white flex items-center space-x-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
+        <label className="text-xs font-bold text-white flex items-center space-x-1.5">
           {icon}
           <span>{label}</span>
         </label>
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2">
           {sublabel && (
-            <span className="text-[10px] text-[#B0A894] font-normal">{sublabel}</span>
+            <span className="text-[10px] text-[#B0A894] font-normal hidden sm:inline">
+              {sublabel}
+            </span>
           )}
           {/* Botones Modo Edición / Vista Previa */}
           <div className="flex bg-[#1A140E] p-0.5 rounded-lg border border-white/10">
@@ -99,16 +102,16 @@ export function RichTextArea({
               }`}
             >
               <Eye className="w-3 h-3" />
-              <span>Vista Previa</span>
+              <span>Preview</span>
             </button>
           </div>
         </div>
       </div>
 
       <div className="bg-[#0C0A07] border border-white/10 rounded-xl overflow-hidden focus-within:border-[#C9A45C] transition-all shadow-inner">
-        {/* Barra de Herramientas de Formato HTML Real */}
+        {/* Barra de Herramientas */}
         {activeTab === "edit" && (
-          <div className="flex items-center space-x-1 px-3 py-1.5 bg-[#1A140E] border-b border-white/10">
+          <div className="flex items-center space-x-1 px-2.5 py-1 bg-[#1A140E] border-b border-white/10">
             <button
               type="button"
               onMouseDown={(e) => {
@@ -116,7 +119,7 @@ export function RichTextArea({
                 execCommand("bold");
               }}
               title="Negrita"
-              className="p-1.5 rounded-lg text-[#B0A894] hover:text-[#C9A45C] hover:bg-white/5 transition-all text-xs font-bold flex items-center space-x-1"
+              className="p-1 rounded text-[#B0A894] hover:text-[#C9A45C] hover:bg-white/5 transition-all text-xs font-bold"
             >
               <Bold className="w-3.5 h-3.5" />
             </button>
@@ -127,19 +130,19 @@ export function RichTextArea({
                 execCommand("italic");
               }}
               title="Cursiva"
-              className="p-1.5 rounded-lg text-[#B0A894] hover:text-[#C9A45C] hover:bg-white/5 transition-all text-xs flex items-center space-x-1"
+              className="p-1 rounded text-[#B0A894] hover:text-[#C9A45C] hover:bg-white/5 transition-all text-xs"
             >
               <Italic className="w-3.5 h-3.5" />
             </button>
-            <div className="h-3 w-[1px] bg-white/10 mx-1" />
+            <div className="h-3 w-[1px] bg-white/10 mx-0.5" />
             <button
               type="button"
               onMouseDown={(e) => {
                 e.preventDefault();
                 execCommand("insertUnorderedList");
               }}
-              title="Lista con Viñetas"
-              className="p-1.5 rounded-lg text-[#B0A894] hover:text-[#C9A45C] hover:bg-white/5 transition-all text-xs flex items-center space-x-1"
+              title="Lista"
+              className="p-1 rounded text-[#B0A894] hover:text-[#C9A45C] hover:bg-white/5 transition-all text-xs"
             >
               <List className="w-3.5 h-3.5" />
             </button>
@@ -150,29 +153,32 @@ export function RichTextArea({
                 execCommand("insertOrderedList");
               }}
               title="Lista Numerada"
-              className="p-1.5 rounded-lg text-[#B0A894] hover:text-[#C9A45C] hover:bg-white/5 transition-all text-xs flex items-center space-x-1"
+              className="p-1 rounded text-[#B0A894] hover:text-[#C9A45C] hover:bg-white/5 transition-all text-xs"
             >
               <ListOrdered className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
 
-        {/* Editor WYSIWYG (contentEditable) */}
+        {/* Editor Content */}
         {activeTab === "edit" ? (
           <div
             ref={editorRef}
             contentEditable
             onInput={handleInput}
             style={{ minHeight: `${rows * 1.5}rem` }}
-            className="w-full bg-transparent p-4 text-xs text-white outline-none leading-relaxed overflow-y-auto rich-editor-content"
+            className="w-full bg-transparent p-3 sm:p-4 text-xs text-white outline-none leading-relaxed overflow-y-auto rich-editor-content"
             data-placeholder={placeholder}
           />
         ) : (
-          /* Vista Previa Renderizada */
           <div
             style={{ minHeight: `${rows * 1.5}rem` }}
-            className="w-full bg-[#080705] p-4 text-xs text-[#E5DBC7] leading-relaxed overflow-y-auto rich-editor-content border-l-2 border-[#C9A45C]"
-            dangerouslySetInnerHTML={{ __html: value || "<span class='text-gray-500 italic'>Sin contenido</span>" }}
+            className="w-full bg-[#080705] p-3 sm:p-4 text-xs text-[#E5DBC7] leading-relaxed overflow-y-auto rich-editor-content border-l-2 border-[#C9A45C]"
+            dangerouslySetInnerHTML={{
+              __html:
+                value ||
+                "<span class='text-gray-500 italic'>Sin contenido</span>",
+            }}
           />
         )}
       </div>

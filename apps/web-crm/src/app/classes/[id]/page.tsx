@@ -3,11 +3,12 @@
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import LinkRaw from "next/link";
-import { ArrowLeft as ArrowLeftIcon, ArrowRight as ArrowRightIcon, Save as SaveIcon } from "lucide-react";
+import {
+  ArrowLeft as ArrowLeftIcon,
+  ArrowRight as ArrowRightIcon,
+  Save as SaveIcon,
+} from "lucide-react";
 
-const ArrowLeft: any = ArrowLeftIcon;
-const ArrowRight: any = ArrowRightIcon;
-const Save: any = SaveIcon;
 import {
   getTheoreticalModuleById,
   parseClassFile,
@@ -19,6 +20,9 @@ import { Step3PracticalCases } from "@/components/class-form/Step3PracticalCases
 import { Step4QuizAndClose } from "@/components/class-form/Step4QuizAndClose";
 
 const Link: any = LinkRaw;
+const ArrowLeft: any = ArrowLeftIcon;
+const ArrowRight: any = ArrowRightIcon;
+const Save: any = SaveIcon;
 
 const splitHtmlLines = (html: string): string[] => {
   if (!html) return [];
@@ -30,11 +34,18 @@ const splitHtmlLines = (html: string): string[] => {
     .map((l) => l.trim())
     .filter((l) => {
       if (!l) return false;
-      const textOnly = l.replace(/<[^>]+>/g, "").replace(/&nbsp;/gi, "").trim();
-      return textOnly !== "" && textOnly !== "•" && textOnly !== "-" && textOnly !== "*";
+      const textOnly = l
+        .replace(/<[^>]+>/g, "")
+        .replace(/&nbsp;/gi, "")
+        .trim();
+      return (
+        textOnly !== "" &&
+        textOnly !== "•" &&
+        textOnly !== "-" &&
+        textOnly !== "*"
+      );
     });
 };
-
 
 export default function EditClassPage() {
   const router = useRouter();
@@ -57,7 +68,13 @@ export default function EditClassPage() {
     instructorName: "",
     hasVideo: false,
 
-    chapters: [] as { id: number; title: string; timestamp: string; status: string; content: string }[],
+    chapters: [] as {
+      id: number;
+      title: string;
+      timestamp: string;
+      status: string;
+      content: string;
+    }[],
     introductionText: "",
     summaryText: "",
     objectivesText: "",
@@ -103,7 +120,6 @@ export default function EditClassPage() {
     } as Record<string, boolean>,
   });
 
-  // Carga inicial de datos de la clase desde la API
   useEffect(() => {
     async function loadClassData() {
       try {
@@ -140,12 +156,13 @@ export default function EditClassPage() {
             quizPassingScore: mod.evaluations?.[0]?.passingScore || 7,
             quizQuestions: mod.evaluations?.[0]?.questions?.map((q: any) => ({
               questionText: q.text || q.questionText || "",
-              options: q.options || q.optionsJson || [
-                "Opción A",
-                "Opción B",
-                "Opción C",
-                "Opción D",
-              ],
+              options: q.options ||
+                q.optionsJson || [
+                  "Opción A",
+                  "Opción B",
+                  "Opción C",
+                  "Opción D",
+                ],
               correctAnswerIndex: q.correctAnswerIndex || 0,
             })) || [
               {
@@ -186,7 +203,6 @@ export default function EditClassPage() {
     if (classId) loadClassData();
   }, [classId]);
 
-  // Re-escaneo de archivo en edición
   const handleFileUpload = async (file: File) => {
     setParsing(true);
     setParseSuccess("");
@@ -204,7 +220,9 @@ export default function EditClassPage() {
           parsed.totalDurationMinutes || prev.totalDurationMinutes,
         level: parsed.level || prev.level,
         instructorName: parsed.instructorName || prev.instructorName,
-        chapters: Array.isArray(parsed.chaptersJson) ? parsed.chaptersJson : prev.chapters,
+        chapters: Array.isArray(parsed.chaptersJson)
+          ? parsed.chaptersJson
+          : prev.chapters,
 
         introductionText: parsed.introductionText || "",
         summaryText: parsed.summaryText || "",
@@ -249,7 +267,7 @@ export default function EditClassPage() {
       }));
 
       setParseSuccess(
-        `Se re-escanean las secciones del archivo "${file.name}" con éxito.`,
+        `Se re-escanean las secciones de "${file.name}" con éxito.`,
       );
     } catch (err) {
       console.error("Error al procesar archivo:", err);
@@ -350,7 +368,7 @@ export default function EditClassPage() {
 
   if (loading) {
     return (
-      <div className="p-8 w-full space-y-4">
+      <div className="p-4 sm:p-8 w-full space-y-4">
         <div className="h-16 bg-white/10 rounded-2xl animate-pulse" />
         <div className="h-32 bg-[#C9A45C]/15 rounded-2xl animate-pulse" />
         <div className="h-64 bg-white/5 rounded-2xl animate-pulse" />
@@ -359,23 +377,22 @@ export default function EditClassPage() {
   }
 
   return (
-    <div className="p-8 w-full min-h-screen space-y-6">
+    <div className="p-4 sm:p-6 md:p-8 w-full min-h-screen space-y-6">
       {/* Navigation Top Bar */}
-      <div className="flex items-center justify-between bg-[#15100A] p-6 rounded-2xl border border-white/10 shadow-xl">
-        <div className="flex items-center space-x-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-[#15100A] p-4 sm:p-6 rounded-2xl border border-white/10 shadow-xl gap-4">
+        <div className="flex items-center space-x-3 sm:space-x-4">
           <Link
             href="/classes"
-            className="w-11 h-11 rounded-xl bg-black/40 border border-white/10 hover:border-[#C9A45C] flex items-center justify-center text-white transition-all shadow-inner"
+            className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-black/40 border border-white/10 hover:border-[#C9A45C] flex items-center justify-center text-white transition-all shadow-inner shrink-0"
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">
+            <h1 className="text-lg sm:text-2xl font-bold text-white tracking-tight">
               Editar Clase Teórica
             </h1>
             <p className="text-xs text-[#B0A894] mt-0.5">
-              Modificá las secciones pedagógicas o re-escaneá el contenido desde
-              un archivo PDF/MD.
+              Modificá las secciones o re-escaneá el PDF/MD.
             </p>
           </div>
         </div>
@@ -383,20 +400,18 @@ export default function EditClassPage() {
         <button
           onClick={handleUpdateClass}
           disabled={saving}
-          className="bg-[#C9A45C] hover:bg-[#b5924d] text-black font-bold px-6 py-3 rounded-xl text-xs flex items-center space-x-2 transition-all shadow-lg"
+          className="w-full sm:w-auto bg-[#C9A45C] hover:bg-[#b5924d] text-black font-bold px-6 py-3 rounded-xl text-xs flex items-center justify-center space-x-2 transition-all shadow-lg"
         >
           <Save className="w-4 h-4" />
           <span>{saving ? "Guardando..." : "Guardar Cambios"}</span>
         </button>
       </div>
 
-      {/* Progress Bar & Stepper Indicator */}
-      <div className="bg-[#15100A] p-6 rounded-2xl border border-white/10 space-y-4 shadow-xl">
+      {/* Stepper Progress */}
+      <div className="bg-[#15100A] p-4 sm:p-6 rounded-2xl border border-white/10 space-y-4 shadow-xl">
         <div className="flex justify-between items-center text-xs font-bold uppercase tracking-wider">
-          <span className="text-[#C9A45C]">
-            Progreso de Edición de la Lección
-          </span>
-          <span className="text-white bg-[#C9A45C]/20 border border-[#C9A45C] px-3 py-1 rounded-full">
+          <span className="text-[#C9A45C]">Progreso de Edición</span>
+          <span className="text-white bg-[#C9A45C]/20 border border-[#C9A45C] px-2.5 py-0.5 rounded-full text-[11px]">
             {progressPercent}% Completado
           </span>
         </div>
@@ -408,20 +423,20 @@ export default function EditClassPage() {
           />
         </div>
 
-        <div className="grid grid-cols-4 gap-3 pt-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 pt-2">
           {[
             { step: 1, title: "1. Info & Archivo" },
-            { step: 2, title: "2. Contenido & Resumen" },
-            { step: 3, title: "3. Casos & Actividades" },
-            { step: 4, title: "4. Autoevaluación & Cierre" },
+            { step: 2, title: "2. Contenido" },
+            { step: 3, title: "3. Casos Prácticos" },
+            { step: 4, title: "4. Evaluación" },
           ].map((s) => (
             <button
               key={s.step}
               type="button"
               onClick={() => setCurrentStep(s.step)}
-              className={`py-3 px-4 rounded-xl text-xs font-bold transition-all border text-center ${
+              className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all border text-center truncate ${
                 currentStep === s.step
-                  ? "bg-[#C9A45C] text-black border-[#C9A45C] shadow-lg scale-[1.02]"
+                  ? "bg-[#C9A45C] text-black border-[#C9A45C] shadow-lg"
                   : currentStep > s.step
                     ? "bg-[#C9A45C]/15 text-[#C9A45C] border-[#C9A45C]/40"
                     : "bg-black/30 text-gray-400 border-white/10"
@@ -461,29 +476,29 @@ export default function EditClassPage() {
         />
       )}
 
-      {/* Stepper Footer Buttons */}
-      <div className="flex justify-between items-center bg-[#15100A] p-5 rounded-2xl border border-white/10 shadow-xl">
+      {/* Stepper Footer Navigation */}
+      <div className="flex justify-between items-center bg-[#15100A] p-4 sm:p-5 rounded-2xl border border-white/10 shadow-xl">
         <button
           type="button"
           disabled={currentStep === 1}
           onClick={() => setCurrentStep((prev) => Math.max(1, prev - 1))}
-          className={`px-6 py-3 rounded-xl text-xs font-bold flex items-center space-x-2 ${
+          className={`px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl text-xs font-bold flex items-center space-x-2 ${
             currentStep === 1
               ? "opacity-30 cursor-not-allowed text-gray-500"
               : "bg-black/40 border border-white/10 text-white hover:border-[#C9A45C]"
           }`}
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Paso Anterior</span>
+          <span>Anterior</span>
         </button>
 
         {currentStep < 4 ? (
           <button
             type="button"
             onClick={() => setCurrentStep((prev) => Math.min(4, prev + 1))}
-            className="bg-[#C9A45C] hover:bg-[#b5924d] text-black font-bold px-7 py-3 rounded-xl text-xs flex items-center space-x-2 shadow-lg"
+            className="bg-[#C9A45C] hover:bg-[#b5924d] text-black font-bold px-5 py-2.5 sm:px-7 sm:py-3 rounded-xl text-xs flex items-center space-x-2 shadow-lg"
           >
-            <span>Siguiente Paso</span>
+            <span>Siguiente</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         ) : (
@@ -491,7 +506,7 @@ export default function EditClassPage() {
             type="button"
             onClick={handleUpdateClass}
             disabled={saving}
-            className="bg-[#C9A45C] hover:bg-[#b5924d] text-black font-bold px-7 py-3 rounded-xl text-xs flex items-center space-x-2 shadow-lg"
+            className="bg-[#C9A45C] hover:bg-[#b5924d] text-black font-bold px-5 py-2.5 sm:px-7 sm:py-3 rounded-xl text-xs flex items-center space-x-2 shadow-lg"
           >
             <Save className="w-4 h-4" />
             <span>{saving ? "Guardando..." : "Guardar Cambios"}</span>

@@ -1,44 +1,51 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 export interface UserSession {
   id: string;
   name: string;
   email: string;
-  role: 'ADMIN' | 'ASSISTANT';
+  role: "ADMIN" | "ASSISTANT";
 }
 
 interface AuthContextType {
   user: UserSession | null;
-  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  login: (
+    email: string,
+    password: string,
+  ) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+// Funciones auxiliares nativas para cookies (sin librerías externas)
+const setCookie = (name: string, value: string, days = 7) => {
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+};
+
+const deleteCookie = (name: string) => {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+};
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
     async function restoreSession() {
-      const token = localStorage.getItem('iltct_crm_token');
-      const storedUser = localStorage.getItem('iltct_crm_user');
+      const storedUser = localStorage.getItem("iltct_crm_user");
+      const token = localStorage.getItem("iltct_crm_token");
 
       if (token && storedUser) {
         try {
-          // Validar el token con el endpoint /auth/me
           const response = await fetch(`${API_BASE_URL}/auth/me`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           });
 
           if (response.ok) {
@@ -50,14 +57,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               role: data.role,
             };
             setUser(sessionUser);
-            localStorage.setItem('iltct_crm_user', JSON.stringify(sessionUser));
+            localStorage.setItem("iltct_crm_user", JSON.stringify(sessionUser));
+            setCookie("iltct_crm_token", token);
+            setCookie("iltct_crm_role", data.role);
           } else {
-            // Token inválido o expirado
             logout();
           }
         } catch (e) {
-          console.error('Error al restaurar sesión:', e);
-          // Intentar usar la sesión offline si falla la conexión temporalmente
           try {
             setUser(JSON.parse(storedUser));
           } catch (err) {
@@ -71,34 +77,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     restoreSession();
   }, []);
 
-  useEffect(() => {
-    if (!isLoading) {
-      if (!user && pathname !== '/login') {
-        router.push('/login');
-      } else if (user && user.role === 'ASSISTANT') {
-        const assistantRestrictedRoutes = [
-          '/classes',
-          '/franchises',
-          '/finances',
-          '/roles',
-        ];
-        const isRestricted = assistantRestrictedRoutes.some(
-          (route) => pathname === route || pathname.startsWith(`${route}/`),
-        );
-        if (isRestricted) {
-          router.push('/dashboard');
-        }
-      }
-    }
-  }, [user, isLoading, pathname, router]);
-
-  const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
+  const login = async (email: string, password: string) => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
@@ -106,17 +89,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const errorData = await response.json().catch(() => ({}));
         return {
           success: false,
-          message: errorData.message || 'Credenciales inválidas o error de red.',
+          message:
+            errorData.message || "Credenciales inválidas o error de red.",
         };
       }
 
       const data = await response.json();
-      
-      // Validar si el rol es elegible para el CRM
-      if (data.user.role !== 'ADMIN' && data.user.role !== 'ASSISTANT') {
+
+      if (data.user.role !== "ADMIN" && data.user.role !== "ASSISTANT") {
         return {
           success: false,
-          message: 'Acceso denegado: Tu usuario no tiene un rol administrativo.',
+          message:
+            "Acceso denegado: Tu usuario no tiene un rol administrativo.",
         };
       }
 
@@ -128,25 +112,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
 
       setUser(sessionUser);
-      localStorage.setItem('iltct_crm_token', data.accessToken);
-      localStorage.setItem('iltct_crm_user', JSON.stringify(sessionUser));
-      
-      router.push('/dashboard');
+
+      // Guardar tanto en localStorage como en Cookies para que Middleware responda de inmediato
+      localStorage.setItem("iltct_crm_token", data.accessToken);
+      localStorage.setItem("iltct_crm_user", JSON.stringify(sessionUser));
+
+      setCookie("iltct_crm_token", data.accessToken);
+      setCookie("iltct_crm_role", data.user.role);
+
+      window.location.href = "/dashboard";
       return { success: true };
     } catch (error) {
-      console.error('Error en login:', error);
-      return {
-        success: false,
-        message: 'Error al conectar con el servidor.',
-      };
+      console.error("Error en login:", error);
+      return { success: false, message: "Error al conectar con el servidor." };
     }
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('iltct_crm_token');
-    localStorage.removeItem('iltct_crm_user');
-    router.push('/login');
+    localStorage.removeItem("iltct_crm_token");
+    localStorage.removeItem("iltct_crm_user");
+
+    deleteCookie("iltct_crm_token");
+    deleteCookie("iltct_crm_role");
+
+    window.location.href = "/login";
   };
 
   return (
@@ -159,8 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+    throw new Error("useAuth debe ser usado dentro de un AuthProvider");
   }
   return context;
 }
-
