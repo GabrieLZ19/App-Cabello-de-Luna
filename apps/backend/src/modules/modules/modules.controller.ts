@@ -52,7 +52,7 @@ export class ModulesController {
   }
 
   @Post("parse-pdf")
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.ASSISTANT)
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(FileInterceptor("file"))
   @ApiOperation({
@@ -70,7 +70,6 @@ export class ModulesController {
         file.mimetype === "application/pdf" ||
         file.originalname.endsWith(".pdf")
       ) {
-        // Instanciamos el parser de v2
         const parser = new PDFParse({ data: file.buffer });
         const parsed = await parser.getText();
         textContent = parsed.text;
@@ -85,14 +84,14 @@ export class ModulesController {
   }
 
   @Post()
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.ASSISTANT)
   @ApiOperation({ summary: "Crear nueva clase teórica" })
   async createModule(@Body() body: any) {
     return this.modulesService.createTheoreticalModule(body);
   }
 
   @Put(":id")
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.ASSISTANT)
   @ApiOperation({
     summary: "Actualizar clase teórica y guardar visibilidad de secciones",
   })
@@ -101,7 +100,7 @@ export class ModulesController {
   }
 
   @Delete(":id")
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.ASSISTANT)
   @ApiOperation({ summary: "Eliminar una clase teórica de Supabase" })
   async deleteModule(@Param("id") id: string) {
     return this.modulesService.deleteTheoreticalModule(id);
@@ -123,4 +122,3 @@ export class ModulesController {
     );
   }
 }
-
