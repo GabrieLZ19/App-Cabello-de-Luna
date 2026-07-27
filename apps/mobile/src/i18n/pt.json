@@ -185,7 +185,7 @@
     "nextClassTitle": "Química Cosmética e Formulações Capilares"
   },
   "practice": {
-    "title": "Fase Prática",
+    "title": "Fase Práctica",
     "subtitle": "10 Modelos · 70 Cortes · Ciclos Lunares",
     "currentPhase": "Fase Lunar Atual",
     "moonDesc": "Quarto Crescente · Ideal para cortes",
@@ -196,9 +196,25 @@
     "uploadSheet": "Enviar Ficha",
     "assignModel": "Atribuir Modelo {{number}}",
     "modelLabel": "Modelo {{number}}",
+    "modelPrefix": "Modelo",
     "modelCuts": "{{current}}/7 Cortes",
     "alertTitle": "Ficha de Corte Registrada!",
-    "alertSuccessMessage": "Evidência fotográfica (Antes/Depois) enviada com sucesso para revisão dos instrutores."
+    "alertSuccessMessage": "Evidência fotográfica (Antes/Depois) enviada com sucesso para revisão dos instrutores.",
+    "permissionDeniedTitle": "Permissão negada",
+    "permissionDeniedMessage": "O acesso à galeria é necessário.",
+    "incompletePhotosTitle": "Fotos incompletas",
+    "incompletePhotosMessage": "Por favor, selecione ambas as fotos.",
+    "sendErrorTitle": "Erro de envio",
+    "sendErrorMessage": "Não foi possível enviar a evidência.",
+    "modalHeaderTitle": "Enviar Ficha · Modelo {{number}}",
+    "evidencePhotosSection": "FOTOGRAFIAS DE EVIDÊNCIA",
+    "photoBeforeLabel": "Foto Antes",
+    "photoAfterLabel": "Foto Depois",
+    "technicalSheetSection": "FICHA TÉCNICA E DIAGNÓSTICO",
+    "technicalSheetPlaceholder": "Digite o diagnóstico capilar, temperatura aplicada e observações do corte...",
+    "sendForReviewButton": "Enviar Evidência para Revisão",
+    "currentLunarPhaseName": "Quarto Crescente",
+    "defaultSheetText": "Ficha técnica enviada pela aluna."
   },
   "profile": {
     "title": "Meu Perfil",

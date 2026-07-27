@@ -1,4 +1,5 @@
-import { fetchClient } from './config';
+import { Platform } from "react-native";
+import { fetchClient } from "./config";
 
 export interface EvidenceData {
   id: string;
@@ -22,7 +23,7 @@ export interface CutData {
   id: string;
   cutNumber: number;
   lunarPhase?: string;
-  status: 'PENDING' | 'IN_REVIEW' | 'APPROVED' | 'CORRECTION_REQUIRED';
+  status: "PENDING" | "IN_REVIEW" | "APPROVED" | "CORRECTION_REQUIRED";
   submittedAt?: string;
   evidence?: EvidenceData;
   feedbacks?: FeedbackData[];
@@ -37,28 +38,34 @@ export interface PracticalModelData {
   cuts: CutData[];
 }
 
-export async function getStudentPractices(token: string): Promise<PracticalModelData[]> {
-  return fetchClient<PracticalModelData[]>('/practices/my-cuts', { method: 'GET' }, token);
+export async function getStudentPractices(
+  token: string,
+): Promise<PracticalModelData[]> {
+  return fetchClient<PracticalModelData[]>(
+    "/practices/my-cuts",
+    { method: "GET" },
+    token,
+  );
 }
 
-export async function submitCutEvidence(
+export async function uploadCutEvidenceWithFiles(
   data: {
     modelName: string;
     modelNumber: number;
     cutNumber: number;
     lunarPhase: string;
-    photoBeforeUrl: string;
-    photoAfterUrl: string;
+    photoBeforeBase64: string;
+    photoAfterBase64: string;
     technicalSheetText: string;
   },
-  token: string
-): Promise<CutData> {
-  return fetchClient<CutData>(
-    '/practices/submit',
+  token: string,
+) {
+  return fetchClient(
+    "/practices/submit",
     {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(data),
     },
-    token
+    token,
   );
 }
