@@ -2,39 +2,37 @@ import React, { useState } from "react";
 import { View, Text, Image, TouchableOpacity, StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { ChevronRight, ChevronLeft } from "lucide-react-native";
 import { storage } from "@/services";
 
-const ONBOARDING_SLIDES = [
-  {
-    id: 1,
-    title: "Bienvenida al ILTCT",
-    subtitle:
-      "Tu formación profesional en tricología cosmética y salud capilar, reunida en un solo lugar.",
-  },
-  {
-    id: 2,
-    title: "Una ciencia, cinco miradas",
-    subtitle:
-      "Química cosmética, endocrinología, nutrición, dermatología capilar y prevención del daño mecánico, integradas en un mismo método.",
-  },
-  {
-    id: 3,
-    title: "Método Cabello de Luna",
-    subtitle:
-      "Tijeras térmicas que cauterizan las puntas dañadas y devuelven integridad y longitud visible a la fibra capilar.",
-  },
-  {
-    id: 4,
-    title: "Dos fases, un especialista",
-    subtitle:
-      "10 meses teóricos te dan un título de Tricólogo Cosmético. Tras 7 lunas clínicas y 70 casos reales, te certificás como Técnico Especialista en Tricología Cosmética y Tricoptilosis.",
-  },
-];
-
 export default function OnboardingScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  const ONBOARDING_SLIDES = [
+    {
+      id: 1,
+      title: t("onboarding.slide1Title"),
+      subtitle: t("onboarding.slide1Sub"),
+    },
+    {
+      id: 2,
+      title: t("onboarding.slide2Title"),
+      subtitle: t("onboarding.slide2Sub"),
+    },
+    {
+      id: 3,
+      title: t("onboarding.slide3Title"),
+      subtitle: t("onboarding.slide3Sub"),
+    },
+    {
+      id: 4,
+      title: t("onboarding.slide4Title"),
+      subtitle: t("onboarding.slide4Sub"),
+    },
+  ];
 
   const handleNext = async () => {
     if (currentSlide < ONBOARDING_SLIDES.length - 1) {
@@ -99,7 +97,7 @@ export default function OnboardingScreen() {
                   marginLeft: 4,
                 }}
               >
-                Anterior
+                {t("onboarding.prev")}
               </Text>
             </TouchableOpacity>
           ) : (
@@ -112,12 +110,12 @@ export default function OnboardingScreen() {
             style={{ paddingHorizontal: 12, paddingVertical: 8 }}
           >
             <Text style={{ color: "#B0A894", fontSize: 14, fontWeight: "600" }}>
-              Saltar
+              {t("onboarding.skip")}
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Center Emblem Icon with Seamless Soft Gold Neon Glow (No Extra Box Border) */}
+        {/* Center Emblem Icon */}
         <View
           style={{
             flex: 1,
@@ -205,7 +203,7 @@ export default function OnboardingScreen() {
             {slide.subtitle}
           </Text>
 
-          {/* Navigation Controls: Siguiente Button with Neon Glow */}
+          {/* Navigation Controls */}
           <View style={{ flexDirection: "row", gap: 12 }}>
             <TouchableOpacity
               onPress={handleNext}
@@ -234,8 +232,8 @@ export default function OnboardingScreen() {
                 }}
               >
                 {currentSlide === ONBOARDING_SLIDES.length - 1
-                  ? "Comenzar"
-                  : "Siguiente"}
+                  ? t("onboarding.start")
+                  : t("onboarding.next")}
               </Text>
               <ChevronRight color="#0C0A07" size={20} />
             </TouchableOpacity>

@@ -4,18 +4,16 @@ import { View, Text, TextInput, TextInputProps } from "react-native";
 interface CustomInputProps extends TextInputProps {
   label?: string;
   error?: string;
-  className?: string;
 }
 
 export const CustomInput: React.FC<CustomInputProps> = ({
   label,
   error,
-  className = "",
   style,
   ...props
 }) => {
   return (
-    <View className={`mb-4 ${className}`}>
+    <View style={{ marginBottom: 16 }}>
       {label && (
         <Text
           style={{

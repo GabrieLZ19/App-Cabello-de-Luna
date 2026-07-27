@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
+import React from "react";
+import { View, Text } from "react-native";
+import Svg, { Circle } from "react-native-svg";
 
 interface CircularProgressProps {
   percentage: number;
@@ -19,9 +19,15 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
   const strokeDashoffset = circumference - (circumference * percentage) / 100;
 
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+    <View
+      style={{
+        width: size,
+        height: size,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
       <Svg width={size} height={size}>
-        {/* Background Track Circle */}
         <Circle
           cx={center}
           cy={center}
@@ -30,7 +36,6 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
           strokeWidth={strokeWidth}
           fill="none"
         />
-        {/* Progress Arc */}
         <Circle
           cx={center}
           cy={center}
@@ -44,8 +49,14 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
           transform={`rotate(-90 ${center} ${center})`}
         />
       </Svg>
-      <View style={{ position: 'absolute', alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: 'bold' }}>
+      <View
+        style={{
+          position: "absolute",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Text style={{ color: "#FFFFFF", fontSize: 18, fontWeight: "bold" }}>
           {percentage}%
         </Text>
       </View>

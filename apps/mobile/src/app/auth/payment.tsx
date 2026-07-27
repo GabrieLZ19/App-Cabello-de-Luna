@@ -1,131 +1,279 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, StatusBar } from 'react-native';
-import { useRouter } from 'expo-router';
-import { CreditCard, ShieldCheck, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react-native';
-import { DESIGN_TOKENS } from '@iltct/shared';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  StatusBar,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
+import {
+  CreditCard,
+  ShieldCheck,
+  ArrowRight,
+  ArrowLeft,
+  CheckCircle2,
+} from "lucide-react-native";
+import { DESIGN_TOKENS } from "@iltct/shared";
 
 export default function PaymentScreen() {
   const router = useRouter();
-  const [currency, setCurrency] = useState<'MXN' | 'USD'>('MXN');
-  const [paymentMethod, setPaymentMethod] = useState<'CARD' | 'MERCADOPAGO' | 'TRANSFER'>('CARD');
+  const { t } = useTranslation();
+  const [currency, setCurrency] = useState<"MXN" | "USD">("MXN");
+  const [paymentMethod, setPaymentMethod] = useState<
+    "CARD" | "MERCADOPAGO" | "TRANSFER"
+  >("CARD");
   const [loading, setLoading] = useState(false);
 
-  const isMXN = currency === 'MXN';
-  const enrollmentAmount = isMXN ? DESIGN_TOKENS.pricing.enrollmentMXN : DESIGN_TOKENS.pricing.enrollmentUSD;
-  const tuitionAmount = isMXN ? DESIGN_TOKENS.pricing.tuitionMXN : DESIGN_TOKENS.pricing.tuitionUSD;
+  const isMXN = currency === "MXN";
+  const enrollmentAmount = isMXN
+    ? DESIGN_TOKENS.pricing.enrollmentMXN
+    : DESIGN_TOKENS.pricing.enrollmentUSD;
+  const tuitionAmount = isMXN
+    ? DESIGN_TOKENS.pricing.tuitionMXN
+    : DESIGN_TOKENS.pricing.tuitionUSD;
   const totalAmount = enrollmentAmount + tuitionAmount;
-  const currencySymbol = isMXN ? '$' : 'USD $';
+  const currencySymbol = isMXN ? "$" : "USD $";
 
   const handlePay = () => {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      router.push('/auth/verify');
+      router.push("/auth/verify");
     }, 1200);
   };
 
   return (
     <ScrollView
-      contentContainerStyle={{ flexGrow: 1 }}
-      style={{ backgroundColor: '#0C0A07' }}
-      className="px-6 py-10"
+      contentContainerStyle={{
+        flexGrow: 1,
+        paddingHorizontal: 24,
+        paddingVertical: 40,
+      }}
+      style={{ backgroundColor: "#0C0A07" }}
     >
       <StatusBar barStyle="light-content" backgroundColor="#0C0A07" />
 
-      {/* Back Navigation */}
-      <TouchableOpacity 
-        onPress={() => router.back()} 
-        className="flex-row items-center space-x-2 my-4"
+      <TouchableOpacity
+        onPress={() => router.back()}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          marginVertical: 16,
+        }}
         activeOpacity={0.7}
       >
         <ArrowLeft color="#C9A45C" size={20} />
-        <Text className="text-[#C9A45C] text-sm font-semibold">Volver</Text>
+        <Text
+          style={{
+            color: "#C9A45C",
+            fontSize: 14,
+            fontWeight: "600",
+            marginLeft: 8,
+          }}
+        >
+          {t("auth.back")}
+        </Text>
       </TouchableOpacity>
 
-      {/* Header */}
-      <View className="mb-6">
-        <View className="flex-row items-center space-x-3 mb-4">
+      <View style={{ marginBottom: 24 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 16,
+          }}
+        >
           <Image
-            source={require('../../../assets/brand/icono_redondo_anillo_1024.png')}
-            style={{ width: 36, height: 36 }}
+            source={require("../../../assets/brand/icono_redondo_anillo_1024.png")}
+            style={{ width: 36, height: 36, marginRight: 12 }}
             resizeMode="contain"
           />
-          <Text className="text-[#C9A45C] text-xl font-bold tracking-widest">
+          <Text
+            style={{
+              color: "#C9A45C",
+              fontSize: 20,
+              fontWeight: "bold",
+              letterSpacing: 2,
+            }}
+          >
             ILTCT
           </Text>
         </View>
-        <Text className="text-white text-3xl font-bold mb-2">
-          Pago de Inscripción
+        <Text
+          style={{
+            color: "#FFFFFF",
+            fontSize: 28,
+            fontWeight: "bold",
+            marginBottom: 8,
+          }}
+        >
+          {t("auth.paymentTitle")}
         </Text>
-        <Text className="text-[#B0A894] text-sm">
-          Completá el pago para activar tu acceso a las clases y módulos del instituto.
+        <Text style={{ color: "#B0A894", fontSize: 14 }}>
+          {t("auth.paymentSubtitle")}
         </Text>
       </View>
 
-      {/* Currency Switcher */}
-      <View className="flex-row bg-[#15100A] rounded-xl p-1 mb-6 border border-white/10">
+      <View
+        style={{
+          flexDirection: "row",
+          backgroundColor: "#15100A",
+          borderRadius: 12,
+          padding: 4,
+          marginBottom: 24,
+          borderWidth: 1,
+          borderColor: "rgba(255,255,255,0.1)",
+        }}
+      >
         <TouchableOpacity
-          className={`flex-1 py-2.5 rounded-lg items-center ${
-            isMXN ? 'bg-[#C9A45C]' : 'bg-transparent'
-          }`}
-          onPress={() => setCurrency('MXN')}
+          style={{
+            flex: 1,
+            paddingVertical: 10,
+            borderRadius: 8,
+            alignItems: "center",
+            backgroundColor: isMXN ? "#C9A45C" : "transparent",
+          }}
+          onPress={() => setCurrency("MXN")}
           activeOpacity={0.8}
         >
-          <Text className={`font-bold text-xs ${isMXN ? 'text-[#0C0A07]' : 'text-[#B0A894]'}`}>
-            MXN ($ Pesos Mexicanos)
+          <Text
+            style={{
+              fontWeight: "bold",
+              fontSize: 12,
+              color: isMXN ? "#0C0A07" : "#B0A894",
+            }}
+          >
+            {t("auth.mxnLabel")}
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          className={`flex-1 py-2.5 rounded-lg items-center ${
-            !isMXN ? 'bg-[#C9A45C]' : 'bg-transparent'
-          }`}
-          onPress={() => setCurrency('USD')}
+          style={{
+            flex: 1,
+            paddingVertical: 10,
+            borderRadius: 8,
+            alignItems: "center",
+            backgroundColor: !isMXN ? "#C9A45C" : "transparent",
+          }}
+          onPress={() => setCurrency("USD")}
           activeOpacity={0.8}
         >
-          <Text className={`font-bold text-xs ${!isMXN ? 'text-[#0C0A07]' : 'text-[#B0A894]'}`}>
-            USD ($ Dólares US)
+          <Text
+            style={{
+              fontWeight: "bold",
+              fontSize: 12,
+              color: !isMXN ? "#0C0A07" : "#B0A894",
+            }}
+          >
+            {t("auth.usdLabel")}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Price Breakdown Card */}
-      <View className="bg-[#15100A] border border-white/10 rounded-2xl p-5 mb-6">
-        <Text className="text-[#C9A45C] text-xs font-bold uppercase tracking-wider mb-4">
-          DESGLOSE DE MATRÍCULA Y ACCESO
+      <View
+        style={{
+          backgroundColor: "#15100A",
+          borderWidth: 1,
+          borderColor: "rgba(255,255,255,0.1)",
+          borderRadius: 16,
+          padding: 20,
+          marginBottom: 24,
+        }}
+      >
+        <Text
+          style={{
+            color: "#C9A45C",
+            fontSize: 12,
+            fontWeight: "bold",
+            textTransform: "uppercase",
+            letterSpacing: 1,
+            marginBottom: 16,
+          }}
+        >
+          {t("auth.priceBreakdown")}
         </Text>
 
-        <View className="flex-row justify-between mb-3 pb-3 border-b border-white/10">
-          <Text className="text-white text-sm">Inscripción Única de Ingreso</Text>
-          <Text className="text-[#C9A45C] text-sm font-bold">
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginBottom: 12,
+            paddingBottom: 12,
+            borderBottomWidth: 1,
+            borderBottomColor: "rgba(255,255,255,0.1)",
+          }}
+        >
+          <Text style={{ color: "#FFFFFF", fontSize: 14 }}>
+            {t("auth.oneTimeEnrollment")}
+          </Text>
+          <Text style={{ color: "#C9A45C", fontSize: 14, fontWeight: "bold" }}>
             {currencySymbol} {enrollmentAmount.toLocaleString()}
           </Text>
         </View>
 
-        <View className="flex-row justify-between mb-4 pb-3 border-b border-white/10">
-          <Text className="text-white text-sm">Programa Completo (17 meses)</Text>
-          <Text className="text-[#C9A45C] text-sm font-bold">
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginBottom: 16,
+            paddingBottom: 12,
+            borderBottomWidth: 1,
+            borderBottomColor: "rgba(255,255,255,0.1)",
+          }}
+        >
+          <Text style={{ color: "#FFFFFF", fontSize: 14 }}>
+            {t("auth.fullProgram")}
+          </Text>
+          <Text style={{ color: "#C9A45C", fontSize: 14, fontWeight: "bold" }}>
             {currencySymbol} {tuitionAmount.toLocaleString()}
           </Text>
         </View>
 
-        <View className="flex-row justify-between items-center">
-          <Text className="text-white text-lg font-bold">Total a Pagar</Text>
-          <Text className="text-[#C9A45C] text-2xl font-bold">
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Text style={{ color: "#FFFFFF", fontSize: 18, fontWeight: "bold" }}>
+            {t("auth.totalToPay")}
+          </Text>
+          <Text style={{ color: "#C9A45C", fontSize: 24, fontWeight: "bold" }}>
             {currencySymbol} {totalAmount.toLocaleString()}
           </Text>
         </View>
       </View>
 
-      {/* Payment Method Selector */}
-      <Text className="text-[#B0A894] text-xs font-semibold uppercase tracking-wider mb-3">
-        MÉTODO DE PAGO
+      <Text
+        style={{
+          color: "#B0A894",
+          fontSize: 12,
+          fontWeight: "600",
+          textTransform: "uppercase",
+          letterSpacing: 1,
+          marginBottom: 12,
+        }}
+      >
+        {t("auth.paymentMethodLabel")}
       </Text>
-      <View className="space-y-3 mb-6">
+
+      <View style={{ gap: 12, marginBottom: 24 }}>
         {[
-          { id: 'CARD', label: 'Tarjeta de Crédito / Débito', icon: CreditCard },
-          { id: 'MERCADOPAGO', label: 'MercadoPago / SPEI', icon: CheckCircle2 },
-          { id: 'TRANSFER', label: 'Transferencia Bancaria Directa', icon: ShieldCheck },
+          { id: "CARD", label: t("auth.cardMethod"), icon: CreditCard },
+          {
+            id: "MERCADOPAGO",
+            label: t("auth.mercadopagoMethod"),
+            icon: CheckCircle2,
+          },
+          {
+            id: "TRANSFER",
+            label: t("auth.transferMethod"),
+            icon: ShieldCheck,
+          },
         ].map((item) => {
           const IconComp = item.icon;
           const isSelected = paymentMethod === item.id;
@@ -134,37 +282,84 @@ export default function PaymentScreen() {
               key={item.id}
               onPress={() => setPaymentMethod(item.id as any)}
               activeOpacity={0.8}
-              className={`flex-row items-center justify-between p-4 rounded-xl border ${
-                isSelected 
-                  ? 'bg-[#1F1912] border-[#C9A45C]' 
-                  : 'bg-[#15100A] border-white/10'
-              }`}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: 16,
+                borderRadius: 14,
+                borderWidth: 1,
+                backgroundColor: isSelected ? "#1F1912" : "#15100A",
+                borderColor: isSelected ? "#C9A45C" : "rgba(255,255,255,0.1)",
+              }}
             >
-              <div className="flex-row items-center space-x-3">
-                <IconComp color={isSelected ? '#C9A45C' : '#897F6B'} size={20} />
-                <Text className={`text-sm font-semibold ${isSelected ? 'text-white' : 'text-[#B0A894]'}`}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <IconComp
+                  color={isSelected ? "#C9A45C" : "#897F6B"}
+                  size={20}
+                />
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "600",
+                    color: isSelected ? "#FFFFFF" : "#B0A894",
+                    marginLeft: 12,
+                  }}
+                >
                   {item.label}
                 </Text>
-              </div>
-              <View className={`w-5 h-5 rounded-full border items-center justify-center ${
-                isSelected ? 'border-[#C9A45C] bg-[#C9A45C]' : 'border-white/20'
-              }`}>
-                {isSelected && <View className="w-2 h-2 rounded-full bg-[#0C0A07]" />}
+              </View>
+              <View
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: 10,
+                  borderWidth: 1,
+                  borderColor: isSelected ? "#C9A45C" : "rgba(255,255,255,0.2)",
+                  backgroundColor: isSelected ? "#C9A45C" : "transparent",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {isSelected && (
+                  <View
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: "#0C0A07",
+                    }}
+                  />
+                )}
               </View>
             </TouchableOpacity>
           );
         })}
       </View>
 
-      {/* Submit Button */}
       <TouchableOpacity
         onPress={handlePay}
         disabled={loading}
         activeOpacity={0.85}
-        className="bg-[#C9A45C] py-4 rounded-xl flex-row items-center justify-center space-x-2 shadow-lg mb-8"
+        style={{
+          backgroundColor: "#C9A45C",
+          paddingVertical: 16,
+          borderRadius: 14,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: 32,
+        }}
       >
-        <Text className="text-[#0C0A07] font-bold text-base">
-          {loading ? 'Procesando Pago...' : 'Confirmar y Pagar'}
+        <Text
+          style={{
+            color: "#0C0A07",
+            fontWeight: "bold",
+            fontSize: 16,
+            marginRight: 8,
+          }}
+        >
+          {loading ? t("auth.processingPayment") : t("auth.confirmAndPay")}
         </Text>
         <ArrowRight color="#0C0A07" size={20} />
       </TouchableOpacity>

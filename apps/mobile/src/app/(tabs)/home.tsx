@@ -92,7 +92,7 @@ export default function HomeScreen() {
         }}
         className="flex-1 bg-[#0C0A07] px-5"
       >
-        {/* Header Section matching 05_Home.png */}
+        {/* Header Section */}
         <View
           style={{
             flexDirection: "row",
@@ -103,7 +103,7 @@ export default function HomeScreen() {
         >
           <View>
             <Text style={{ color: "#B0A894", fontSize: 14 }}>
-              Bienvenida Especialista,
+              {t("home.welcomeSpecialist")}
             </Text>
             <Text
               style={{
@@ -117,7 +117,6 @@ export default function HomeScreen() {
             </Text>
           </View>
 
-          {/* Top Right User Avatar Ring with Red Notification Dot */}
           <TouchableOpacity
             activeOpacity={0.8}
             style={{ position: "relative" }}
@@ -144,7 +143,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Section 1: "Tu Progreso" Card */}
+        {/* Section 1: Tu Progreso */}
         <GlassCard style={{ padding: 20, marginBottom: 24, borderRadius: 24 }}>
           <View
             style={{
@@ -157,7 +156,7 @@ export default function HomeScreen() {
             <Text
               style={{ color: "#FFFFFF", fontSize: 18, fontWeight: "bold" }}
             >
-              Tu Progreso
+              {t("home.yourProgress")}
             </Text>
             <View
               style={{
@@ -178,22 +177,22 @@ export default function HomeScreen() {
                   letterSpacing: 0.5,
                 }}
               >
-                MES {currentModule?.month || 1} DE 17
+                {t("home.monthProgress", {
+                  current: currentModule?.month || 1,
+                  total: 17,
+                })}
               </Text>
             </View>
           </View>
 
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            {/* Circular Progress Ring on Left */}
             <CircularProgress
               percentage={progressPercent}
               size={84}
               strokeWidth={8}
             />
 
-            {/* Right Side Progress Details */}
             <View style={{ flex: 1, marginLeft: 20 }}>
-              {/* Theory Line */}
               <View style={{ marginBottom: 14 }}>
                 <View
                   style={{
@@ -203,7 +202,7 @@ export default function HomeScreen() {
                   }}
                 >
                   <Text style={{ color: "#B0A894", fontSize: 13 }}>
-                    Teoría · Mes 1-10
+                    {t("home.theoryRange")}
                   </Text>
                   <Text
                     style={{
@@ -234,7 +233,6 @@ export default function HomeScreen() {
                 </View>
               </View>
 
-              {/* Practice Line */}
               <View
                 style={{
                   flexDirection: "row",
@@ -243,7 +241,7 @@ export default function HomeScreen() {
                 }}
               >
                 <Text style={{ color: "#B0A894", fontSize: 13 }}>
-                  Práctica · Mes 11-17
+                  {t("home.practiceRange")}
                 </Text>
                 <Lock color="#524C40" size={16} />
               </View>
@@ -251,7 +249,7 @@ export default function HomeScreen() {
           </View>
         </GlassCard>
 
-        {/* Section 2: "Semana Actual" */}
+        {/* Section 2: Semana Actual */}
         <Text
           style={{
             color: "#FFFFFF",
@@ -260,10 +258,9 @@ export default function HomeScreen() {
             marginBottom: 14,
           }}
         >
-          Semana Actual
+          {t("home.currentWeek")}
         </Text>
 
-        {/* Premium Luxury Weekly Module Card with LinearGradient and Subtle Gold Glow */}
         <TouchableOpacity
           onPress={() =>
             currentModule && router.push(`/lesson/${currentModule.id}`)
@@ -296,7 +293,6 @@ export default function HomeScreen() {
               />
             ) : (
               <>
-                {/* Card Top Badge & Bookmark */}
                 <View
                   style={{
                     flexDirection: "row",
@@ -323,7 +319,7 @@ export default function HomeScreen() {
                         letterSpacing: 0.8,
                       }}
                     >
-                      MÓDULO DE LA SEMANA
+                      {t("home.weeklyModule")}
                     </Text>
                   </View>
                   <TouchableOpacity
@@ -339,7 +335,6 @@ export default function HomeScreen() {
                   </TouchableOpacity>
                 </View>
 
-                {/* Real Module Title from Supabase Backend */}
                 <Text
                   style={{
                     color: "#FFFFFF",
@@ -349,8 +344,7 @@ export default function HomeScreen() {
                     lineHeight: 26,
                   }}
                 >
-                  {currentModule?.title ||
-                    "Estructura Capilar y Cauterización Térmica"}
+                  {currentModule?.title || t("home.defaultModuleTitle")}
                 </Text>
                 <Text
                   style={{
@@ -360,11 +354,9 @@ export default function HomeScreen() {
                     lineHeight: 19,
                   }}
                 >
-                  {currentModule?.description ||
-                    "Diagnóstico capilar avanzado y tratamientos de restauración con biotecnología."}
+                  {currentModule?.description || t("home.defaultModuleDesc")}
                 </Text>
 
-                {/* Card Bottom Row: Docente IA Left + Circular Gold Neon Play Button Right */}
                 <View
                   style={{
                     flexDirection: "row",
@@ -389,7 +381,7 @@ export default function HomeScreen() {
                     />
                     <View style={{ marginLeft: 12, flex: 1 }}>
                       <Text style={{ color: "#B0A894", fontSize: 11 }}>
-                        Docente IA Especialista
+                        {t("home.aiTeacherRole")}
                       </Text>
                       <Text
                         style={{
@@ -398,12 +390,12 @@ export default function HomeScreen() {
                           fontWeight: "bold",
                         }}
                       >
-                        {currentModule?.avatar?.name || "Clon Mariana Gualda"}
+                        {currentModule?.avatar?.name ||
+                          t("home.defaultAvatarName")}
                       </Text>
                     </View>
                   </View>
 
-                  {/* Circular Gold Neon Play Button with Dual Halo Glow */}
                   <View
                     style={{
                       width: 52,
@@ -439,7 +431,7 @@ export default function HomeScreen() {
           </LinearGradient>
         </TouchableOpacity>
 
-        {/* Section 3: "Herramientas" (Restored Previous Perfect Design) */}
+        {/* Section 3: Herramientas */}
         <Text
           style={{
             color: "#FFFFFF",
@@ -448,7 +440,7 @@ export default function HomeScreen() {
             marginBottom: 14,
           }}
         >
-          Herramientas
+          {t("home.tools")}
         </Text>
 
         <View
@@ -458,7 +450,6 @@ export default function HomeScreen() {
             gap: 12,
           }}
         >
-          {/* Glosario Card */}
           <TouchableOpacity style={{ flex: 1 }} activeOpacity={0.8}>
             <GlassCard
               style={{ borderRadius: 24, padding: 18, alignItems: "center" }}
@@ -472,7 +463,7 @@ export default function HomeScreen() {
                   marginTop: 10,
                 }}
               >
-                Glosario
+                {t("home.glossary")}
               </Text>
               <Text
                 style={{
@@ -482,12 +473,11 @@ export default function HomeScreen() {
                   marginTop: 3,
                 }}
               >
-                Términos del Método
+                {t("home.glossaryDesc")}
               </Text>
             </GlassCard>
           </TouchableOpacity>
 
-          {/* Soporte Card */}
           <TouchableOpacity style={{ flex: 1 }} activeOpacity={0.8}>
             <GlassCard
               style={{ borderRadius: 24, padding: 18, alignItems: "center" }}
@@ -501,7 +491,7 @@ export default function HomeScreen() {
                   marginTop: 10,
                 }}
               >
-                Soporte
+                {t("home.support")}
               </Text>
               <Text
                 style={{
@@ -511,7 +501,7 @@ export default function HomeScreen() {
                   marginTop: 3,
                 }}
               >
-                Asistencia Técnica
+                {t("home.supportDesc")}
               </Text>
             </GlassCard>
           </TouchableOpacity>

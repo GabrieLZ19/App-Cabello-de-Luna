@@ -23,6 +23,7 @@ export default function RootLayout() {
         <Stack.Screen name="auth/forgot-password" />
         <Stack.Screen name="auth/verify" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="settings" />
       </Stack>
     </View>
   );

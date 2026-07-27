@@ -2,10 +2,12 @@ import React from "react";
 import { View, Text, TouchableOpacity, StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { Check, ArrowRight } from "lucide-react-native";
 
 export default function ResetSuccessScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const handleGoToLogin = () => {
     router.replace("/auth/login");
@@ -26,7 +28,6 @@ export default function ResetSuccessScreen() {
           backgroundColor: "#0C0A07",
         }}
       >
-        {/* Circle Halo Badge with Native Overflow Clipping */}
         <View
           style={{
             width: 100,
@@ -56,7 +57,6 @@ export default function ResetSuccessScreen() {
           </View>
         </View>
 
-        {/* Title */}
         <Text
           style={{
             color: "#FFFFFF",
@@ -66,10 +66,9 @@ export default function ResetSuccessScreen() {
             marginBottom: 12,
           }}
         >
-          ¡Contraseña actualizada!
+          {t("auth.resetSuccessTitle")}
         </Text>
 
-        {/* Subtitle */}
         <Text
           style={{
             color: "#B0A894",
@@ -80,11 +79,9 @@ export default function ResetSuccessScreen() {
             maxWidth: 320,
           }}
         >
-          Tu clave ha sido restablecida de forma segura. Ya podés ingresar a la
-          aplicación con tus nuevas credenciales.
+          {t("auth.resetSuccessSubtitle")}
         </Text>
 
-        {/* Primary Action Button */}
         <TouchableOpacity
           onPress={handleGoToLogin}
           activeOpacity={0.85}
@@ -111,7 +108,7 @@ export default function ResetSuccessScreen() {
               marginRight: 8,
             }}
           >
-            Iniciar sesión
+            {t("auth.loginButton")}
           </Text>
           <ArrowRight color="#0C0A07" size={20} />
         </TouchableOpacity>
