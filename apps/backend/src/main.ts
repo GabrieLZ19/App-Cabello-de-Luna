@@ -1,10 +1,15 @@
+import "dotenv/config";
 import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { json, urlencoded } from "express";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.use(json({ limit: "50mb" }));
+  app.use(urlencoded({ extended: true, limit: "50mb" }));
 
   app.enableCors();
   app.setGlobalPrefix("api/v1");
@@ -30,9 +35,8 @@ async function bootstrap() {
   SwaggerModule.setup("api/docs", app, document);
 
   const port = process.env.PORT || 3001;
-  // Escuchar en 0.0.0.0 para aceptar peticiones de dispositivos físicos y emuladores en la red local Wi-Fi
-  await app.listen(port, '0.0.0.0');
-  
+  await app.listen(port, "0.0.0.0");
+
   const baseUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${port}`;
   console.log(`API corriendo en ${baseUrl}/api/v1`);
   console.log(`Documentación Swagger en ${baseUrl}/api/docs`);
