@@ -84,11 +84,18 @@ SMTP_PASS=tu_contraseña_de_aplicacion
 - Push: el ícono es el de la app (nativo). El toast del CRM usa `/logo.png` estático — no hace falta `PUSH_LOGO_URL`.
 - Tiempo real (WebSocket): namespace `/realtime` — CRM recibe `practice:submitted`, alumna recibe `practice:reviewed`. Toast CRM arriba a la derecha con animación.
 
+### Liberación automática de módulos
+- Job Nest (`ModuleReleaseScheduler`): al arrancar + cada **1 hora**.
+- Publica módulos `DRAFT` con `releaseDate <= now` → `PUBLISHED` + push/realtime.
+- Para “cada sábado”: en el CRM poner `releaseDate` el sábado correspondiente (no hace falta cron semanal aparte).
+- Gamificación/desbloqueo por alumna: `ProgressService` (aprobar evaluación ≥7/10).
+
 ### Storage de evidencias (Supabase)
 - Bucket `practice-evidences`: **privado**, máx. 30 MB, MIME de imagen/video acotados.
 - En DB se guarda el **path** del objeto (no URL pública).
 - Al leer prácticas, el backend firma URLs temporales (~2 h) con `SUPABASE_SECRET_KEY` (API Keys nuevas). Fallback legacy: `SUPABASE_SERVICE_ROLE_KEY`.
 - Al reenviar evidencia se borran los archivos anteriores (sin huérfanos).
+- Cleanup semanal (`EvidenceCleanupScheduler`): compara Storage vs tabla `evidences` y borra huérfanos.
 - Variable requerida en `apps/backend/.env`: `SUPABASE_SECRET_KEY` (Dashboard → API Keys → Secret keys).
 
 ---

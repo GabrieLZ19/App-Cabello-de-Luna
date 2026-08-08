@@ -13,8 +13,15 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { RealtimeGateway } from "../realtime/realtime.gateway";
 
 /**
- * Publica módulos DRAFT cuya releaseDate ya llegó.
- * Corre al arrancar y luego cada hora.
+ * Liberación automática de módulos teóricos (FASE 2).
+ *
+ * Flujo esperado:
+ * 1. En el CRM se crea el módulo en DRAFT con `releaseDate` = próximo sábado (o la fecha pactada).
+ * 2. Este job corre al arrancar y **cada hora**.
+ * 3. Cuando `now >= releaseDate`, pasa DRAFT → PUBLISHED y dispara push/realtime.
+ *
+ * No hace falta un cron "solo sábados": la fecha la define el contenido.
+ * El desbloqueo por alumna (gamificación) sigue en ProgressService (aprobar quiz ≥7).
  */
 @Injectable()
 export class ModuleReleaseScheduler

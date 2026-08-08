@@ -168,6 +168,56 @@ export class StorageService implements OnModuleInit {
     await Promise.all(urlsOrPaths.map((u) => this.deleteObject(u)));
   }
 
+  /**
+   * Lista objects del bucket y borra los que no estén referenciados en evidences.
+   */
+  async cleanupOrphanObjects(
+    referencedPaths: string[],
+  ): Promise<{ scanned: number; removed: number }> {
+    const client = this.getClient();
+    const referenced = new Set(
+      referencedPaths
+        .map((p) => this.extractObjectPath(p))
+        .filter((p): p is string => Boolean(p)),
+    );
+
+    const allPaths: string[] = [];
+    const walk = async (prefix: string) => {
+      const { data, error } = await client.storage
+        .from(this.bucketName)
+        .list(prefix, { limit: 1000 });
+      if (error) {
+        this.logger.warn(`List storage (${prefix}): ${error.message}`);
+        return;
+      }
+      for (const item of data || []) {
+        const full = prefix ? `${prefix}/${item.name}` : item.name;
+        // Carpetas en Storage suelen no tener id/metadata.size
+        if ((item as any).id) {
+          allPaths.push(full);
+        } else {
+          await walk(full);
+        }
+      }
+    };
+
+    await walk("");
+    const orphans = allPaths.filter((p) => !referenced.has(p));
+    if (orphans.length > 0) {
+      const { error } = await client.storage
+        .from(this.bucketName)
+        .remove(orphans);
+      if (error) {
+        this.logger.warn(`Cleanup orphans: ${error.message}`);
+        return { scanned: allPaths.length, removed: 0 };
+      }
+    }
+    this.logger.log(
+      `Storage cleanup: ${allPaths.length} archivos, ${orphans.length} huérfanos eliminados`,
+    );
+    return { scanned: allPaths.length, removed: orphans.length };
+  }
+
   async uploadImage(
     file: Express.Multer.File,
     folder: string,

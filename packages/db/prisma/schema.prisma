@@ -110,6 +110,7 @@ model User {
   moduleProgress   ModuleProgress[]
   pushTokens       DevicePushToken[]
 
+  @@index([franchiseId])
   @@map("users")
 }
 
@@ -125,6 +126,7 @@ model Payment {
   reference     String?
   createdAt     DateTime      @default(now())
 
+  @@index([userId])
   @@map("payments")
 }
 
@@ -184,6 +186,8 @@ model TheoreticalModule {
   evaluations          Evaluation[]
   progressRecords      ModuleProgress[]
 
+  @@index([avatarId])
+  @@index([status, releaseDate])
   @@map("theoretical_modules")
 }
 
@@ -200,6 +204,7 @@ model Evaluation {
   questions      Question[]
   attempts       EvaluationAttempt[]
 
+  @@index([moduleId])
   @@map("evaluations")
 }
 
@@ -212,6 +217,7 @@ model Question {
   correctAnswerIndex Int
   explanation        String?    @db.Text
 
+  @@index([evaluationId])
   @@map("questions")
 }
 
@@ -227,6 +233,8 @@ model EvaluationAttempt {
   startedAt    DateTime   @default(now())
   completedAt  DateTime?
 
+  @@index([userId])
+  @@index([evaluationId])
   @@map("evaluation_attempts")
 }
 
@@ -242,6 +250,8 @@ model PracticalModel {
 
   cuts               Cut[]
 
+  @@unique([userId, modelNumber])
+  @@index([userId])
   @@map("practical_models")
 }
 
@@ -258,6 +268,9 @@ model Cut {
   evidence    Evidence?
   feedbacks   Feedback[]
 
+  @@unique([modelId, cutNumber])
+  @@index([modelId])
+  @@index([status])
   @@map("cuts")
 }
 
@@ -285,6 +298,8 @@ model Feedback {
   checklist    Json?     // Lista de cotejo verificada
   reviewedAt   DateTime  @default(now())
 
+  @@index([cutId])
+  @@index([instructorId])
   @@map("feedbacks")
 }
 
@@ -309,6 +324,7 @@ model UserBadge {
   unlockedAt DateTime @default(now())
 
   @@unique([userId, badgeId])
+  @@index([badgeId])
   @@map("user_badges")
 }
 
@@ -323,6 +339,8 @@ model ActivityLog {
   ipAddress String?
   createdAt DateTime @default(now())
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("activity_logs")
 }
 
@@ -341,6 +359,8 @@ model ModuleProgress {
   updatedAt            DateTime             @updatedAt
 
   @@unique([userId, moduleId])
+  @@index([moduleId])
+  @@index([userId, status])
   @@map("module_progress")
 }
 
@@ -353,5 +373,6 @@ model DevicePushToken {
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
 
+  @@index([userId])
   @@map("device_push_tokens")
 }
