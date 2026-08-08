@@ -9,9 +9,11 @@
     "db:generate": "pnpm --filter @iltct/db generate",
     "db:push": "pnpm --filter @iltct/db push"
   },
-  "overrides": {
-    "@types/react": "18.3.2",
-    "@types/react-dom": "18.3.0"
+  "pnpm": {
+    "overrides": {
+      "@iltct/web-crm>@types/react": "18.3.18",
+      "@iltct/web-crm>@types/react-dom": "18.3.5"
+    }
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
+import LinkRaw from "next/link";
 import { useParams } from "next/navigation";
 import {
   ArrowLeft as ArrowLeftIcon,
@@ -14,6 +14,7 @@ import {
 } from "@/services/progressService";
 import { PageSkeleton } from "@/components/PageSkeleton";
 
+const Link: any = LinkRaw;
 const ArrowLeft: any = ArrowLeftIcon;
 const BookOpen: any = BookOpenIcon;
 const Scissors: any = ScissorsIcon;

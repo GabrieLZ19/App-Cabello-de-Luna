@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
+import LinkRaw from "next/link";
 import {
   Users as UsersIcon,
   UserPlus as UserPlusIcon,
@@ -20,6 +20,7 @@ import {
   updateCRMUser,
 } from "@/services/userService";
 
+const Link: any = LinkRaw;
 const Users: any = UsersIcon;
 const UserPlus: any = UserPlusIcon;
 const Search: any = SearchIcon;
