@@ -1,6 +1,7 @@
 import "./globals.css";
 import React from "react";
 import { AuthProvider } from "../context/AuthContext";
+import { RealtimeProvider } from "../context/RealtimeContext";
 import Sidebar from "../components/Sidebar";
 
 export const metadata = {
@@ -17,10 +18,12 @@ export default function RootLayout({
     <html lang="es">
       <body className="bg-[#0C0A07] text-white min-h-screen">
         <AuthProvider>
-          <div className="flex flex-col md:flex-row min-h-screen bg-[#0C0A07]">
-            <Sidebar />
-            <main className="flex-1 overflow-y-auto w-full">{children}</main>
-          </div>
+          <RealtimeProvider>
+            <div className="flex flex-col md:flex-row min-h-screen bg-[#0C0A07]">
+              <Sidebar />
+              <main className="flex-1 overflow-y-auto w-full">{children}</main>
+            </div>
+          </RealtimeProvider>
         </AuthProvider>
       </body>
     </html>

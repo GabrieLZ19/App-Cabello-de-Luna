@@ -5,6 +5,7 @@ export interface EvidenceData {
   id: string;
   photoBeforeUrl: string;
   photoAfterUrl: string;
+  videoOptionalUrl?: string | null;
   technicalSheetText?: string;
   createdAt: string;
 }
@@ -57,6 +58,8 @@ export async function uploadCutEvidenceWithFiles(
     photoBeforeBase64: string;
     photoAfterBase64: string;
     technicalSheetText: string;
+    videoOptionalBase64?: string;
+    videoMimeType?: string;
   },
   token: string,
 ) {

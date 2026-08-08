@@ -32,6 +32,8 @@ import { GlassCard } from "@/components/GlassCard";
 import { HTMLText } from "@/components/HTMLText";
 import {
   getModuleById,
+  recordModuleTime,
+  startModuleProgress,
   TheoreticalModule,
   ChapterItem,
   GlossaryItem,
@@ -39,6 +41,9 @@ import {
   PracticalActivity,
   storage,
 } from "@/services";
+
+const THEORY_SECONDS = 20 * 60;
+const ACTIVITY_SECONDS = 20 * 60;
 
 const cleanTitle = (title?: string, week?: number) => {
   if (!title) return "";
@@ -67,7 +72,13 @@ export default function LessonDetailScreen() {
   >("video");
   const [expandedChapter, setExpandedChapter] = useState<number | null>(1);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [secondsLeft, setSecondsLeft] = useState(20 * 60);
+  const [lessonPhase, setLessonPhase] = useState<"theory" | "activity">(
+    "theory",
+  );
+  const [theorySecondsLeft, setTheorySecondsLeft] = useState(THEORY_SECONDS);
+  const [activitySecondsLeft, setActivitySecondsLeft] =
+    useState(ACTIVITY_SECONDS);
+  const [authToken, setAuthToken] = useState("");
 
   const [openSummarySections, setOpenSummarySections] = useState<
     Record<string, boolean>
@@ -77,19 +88,36 @@ export default function LessonDetailScreen() {
     competencies: true,
   });
 
+  const secondsLeft =
+    lessonPhase === "theory" ? theorySecondsLeft : activitySecondsLeft;
+
   useEffect(() => {
     const timer = setInterval(() => {
-      setSecondsLeft((prev) => (prev > 0 ? prev - 1 : 0));
+      if (lessonPhase === "theory") {
+        setTheorySecondsLeft((prev) => {
+          if (prev <= 1) {
+            setLessonPhase("activity");
+            return 0;
+          }
+          return prev - 1;
+        });
+      } else {
+        setActivitySecondsLeft((prev) => (prev > 0 ? prev - 1 : 0));
+      }
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [lessonPhase]);
 
   useEffect(() => {
     async function loadLessonContent() {
       try {
-        const token = await storage.getToken();
-        const data = await getModuleById(moduleId, token || "");
+        const token = (await storage.getToken()) || "";
+        setAuthToken(token);
+        const data = await getModuleById(moduleId, token);
         setModuleData(data);
+        if (token) {
+          await startModuleProgress(moduleId, token).catch(() => null);
+        }
       } catch (err) {
         console.error("Error cargando detalle pedagógico de la clase:", err);
       } finally {
@@ -99,6 +127,22 @@ export default function LessonDetailScreen() {
     loadLessonContent();
   }, [moduleId]);
 
+  useEffect(() => {
+    if (!authToken || !moduleId) return;
+    const sync = setInterval(() => {
+      const theorySpent = THEORY_SECONDS - theorySecondsLeft;
+      const activitySpent = ACTIVITY_SECONDS - activitySecondsLeft;
+      void recordModuleTime(
+        moduleId,
+        {
+          theorySeconds: Math.max(0, theorySpent),
+          activitySeconds: Math.max(0, activitySpent),
+        },
+        authToken,
+      ).catch(() => null);
+    }, 30_000);
+    return () => clearInterval(sync);
+  }, [authToken, moduleId, theorySecondsLeft, activitySecondsLeft]);
   const toggleChapter = (chapterId: number) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpandedChapter(expandedChapter === chapterId ? null : chapterId);
@@ -931,9 +975,7 @@ export default function LessonDetailScreen() {
           <View style={{ gap: 14 }}>
             <View
               style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
+                gap: 10,
                 marginBottom: 4,
               }}
             >
@@ -948,14 +990,16 @@ export default function LessonDetailScreen() {
               >
                 {t("lesson.pedagogicalReport")}
               </Text>
-              <View style={{ flexDirection: "row", gap: 8 }}>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
                 <TouchableOpacity
                   onPress={() => toggleAllSummarySections(true)}
                   style={{
                     backgroundColor: "rgba(201, 164, 92, 0.12)",
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
                     borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: "rgba(201, 164, 92, 0.35)",
                   }}
                 >
                   <Text
@@ -972,9 +1016,11 @@ export default function LessonDetailScreen() {
                   onPress={() => toggleAllSummarySections(false)}
                   style={{
                     backgroundColor: "rgba(255, 255, 255, 0.05)",
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
                     borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: "rgba(255, 255, 255, 0.1)",
                   }}
                 >
                   <Text

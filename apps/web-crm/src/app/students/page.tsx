@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Users as UsersIcon,
   UserPlus as UserPlusIcon,
@@ -9,8 +10,10 @@ import {
   Edit2 as Edit2Icon,
   UserX as UserXIcon,
   UserCheck2 as UserCheck2Icon,
+  Eye as EyeIcon,
 } from "lucide-react";
 import CustomAlert, { AlertType } from "../../components/CustomAlert";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import {
   getCRMStudents,
   createCRMUser,
@@ -24,6 +27,7 @@ const Building: any = BuildingIcon;
 const Edit2: any = Edit2Icon;
 const UserX: any = UserXIcon;
 const UserCheck2: any = UserCheck2Icon;
+const Eye: any = EyeIcon;
 
 export default function StudentsPage() {
   const [studentsList, setStudentsList] = useState<any[]>([]);
@@ -238,14 +242,7 @@ export default function StudentsPage() {
         </h3>
 
         {loading ? (
-          <div className="space-y-3 py-4">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-20 bg-white/5 rounded-xl animate-pulse"
-              />
-            ))}
-          </div>
+          <PageSkeleton rows={4} showCards={false} />
         ) : filteredStudents.length === 0 ? (
           <div className="text-center py-12 bg-black/30 rounded-xl border border-white/10">
             <Users className="w-8 h-8 text-gray-500 mx-auto mb-2" />
@@ -295,6 +292,13 @@ export default function StudentsPage() {
 
                     {/* Botones de acción directos en móvil */}
                     <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10">
+                      <Link
+                        href={`/students/${s.id}`}
+                        className="col-span-2 w-full bg-[#C9A45C]/10 hover:bg-[#C9A45C]/20 text-[#C9A45C] border border-[#C9A45C]/30 py-2 rounded-xl font-bold transition-all text-xs flex items-center justify-center space-x-1.5"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Ver Progreso</span>
+                      </Link>
                       <button
                         onClick={() => {
                           setSelectedStudent(s);
@@ -377,6 +381,13 @@ export default function StudentsPage() {
                           )}
                         </td>
                         <td className="py-4 pl-4 text-xs text-right space-x-2">
+                          <Link
+                            href={`/students/${s.id}`}
+                            className="bg-[#C9A45C]/10 hover:bg-[#C9A45C]/20 text-[#C9A45C] border border-[#C9A45C]/30 px-3 py-1.5 rounded-lg font-bold transition-all text-[11px] inline-flex items-center space-x-1"
+                          >
+                            <Eye className="w-3 h-3" />
+                            <span>Progreso</span>
+                          </Link>
                           <button
                             onClick={() => {
                               setSelectedStudent(s);

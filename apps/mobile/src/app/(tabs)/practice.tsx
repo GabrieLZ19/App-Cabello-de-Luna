@@ -11,6 +11,7 @@ import {
   TextInput,
   RefreshControl,
   StyleSheet,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -28,8 +29,11 @@ import {
   Lock,
   RotateCcw,
   ChevronRight,
+  Video,
+  Play,
 } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system/legacy";
 import { GlassCard } from "@/components/GlassCard";
 import { CustomAlert } from "@/components/CustomAlert";
 import {
@@ -61,6 +65,8 @@ export default function PracticeScreen() {
   const [targetCutNum, setTargetCutNum] = useState<number>(1);
   const [photoBeforeUri, setPhotoBeforeUri] = useState<string | null>(null);
   const [photoAfterUri, setPhotoAfterUri] = useState<string | null>(null);
+  const [videoUri, setVideoUri] = useState<string | null>(null);
+  const [videoMimeType, setVideoMimeType] = useState<string | undefined>();
   const [technicalSheet, setTechnicalSheet] = useState("");
 
   // Modal de Historial / Feedback
@@ -124,6 +130,8 @@ export default function PracticeScreen() {
     setTargetCutNum(cutNumToUpload);
     setPhotoBeforeUri(null);
     setPhotoAfterUri(null);
+    setVideoUri(null);
+    setVideoMimeType(undefined);
     setTechnicalSheet("");
     setModalVisible(true);
   };
@@ -161,6 +169,84 @@ export default function PracticeScreen() {
     }
   };
 
+  const pickVideo = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      showAlert(
+        t("practice.permissionDeniedTitle"),
+        t("practice.permissionDeniedMessage"),
+        "error",
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["videos"],
+      quality: 0.4,
+      videoMaxDuration: 60,
+    });
+
+    if (result.canceled || !result.assets[0]) return;
+
+    const asset = result.assets[0];
+    const mime = asset.mimeType || "video/mp4";
+    const maxBytes = 12 * 1024 * 1024;
+
+    if (asset.fileSize && asset.fileSize > maxBytes) {
+      showAlert(
+        t("practice.videoTooLargeTitle"),
+        t("practice.videoTooLargeMessage"),
+        "error",
+      );
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      let base64 = asset.base64;
+      if (!base64 && asset.uri) {
+        base64 = await FileSystem.readAsStringAsync(asset.uri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+      }
+
+      if (!base64) {
+        showAlert(
+          t("practice.videoErrorTitle"),
+          t("practice.videoErrorMessage"),
+          "error",
+        );
+        return;
+      }
+
+      // ~1.37x overhead for base64 length vs bytes
+      if (base64.length * 0.75 > maxBytes) {
+        showAlert(
+          t("practice.videoTooLargeTitle"),
+          t("practice.videoTooLargeMessage"),
+          "error",
+        );
+        return;
+      }
+
+      setVideoMimeType(mime);
+      setVideoUri(`data:${mime};base64,${base64}`);
+      showAlert(
+        t("practice.videoAttachedTitle"),
+        t("practice.videoAttachedMessage"),
+        "success",
+      );
+    } catch {
+      showAlert(
+        t("practice.videoErrorTitle"),
+        t("practice.videoErrorMessage"),
+        "error",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleSendEvidence = async () => {
     if (!photoBeforeUri || !photoAfterUri) {
       showAlert(
@@ -187,6 +273,8 @@ export default function PracticeScreen() {
           photoAfterBase64: photoAfterUri,
           technicalSheetText:
             technicalSheet.trim() || t("practice.defaultSheetText"),
+          videoOptionalBase64: videoUri || undefined,
+          videoMimeType: videoMimeType,
         },
         token || "",
       );
@@ -652,30 +740,62 @@ export default function PracticeScreen() {
                 </View>
 
                 {selectedCutDetail.evidence && (
-                  <View style={styles.evidenceContainer}>
-                    <View style={styles.photoWrapper}>
-                      <Text style={styles.photoLabel}>
-                        {t("practice.photoBeforeLabel")}
-                      </Text>
-                      <Image
-                        source={{
-                          uri: selectedCutDetail.evidence.photoBeforeUrl,
-                        }}
-                        style={styles.evidencePhoto}
-                      />
+                  <>
+                    <View style={styles.evidenceContainer}>
+                      <View style={styles.photoWrapper}>
+                        <Text style={styles.photoLabel}>
+                          {t("practice.photoBeforeLabel")}
+                        </Text>
+                        <Image
+                          source={{
+                            uri: selectedCutDetail.evidence.photoBeforeUrl,
+                          }}
+                          style={styles.evidencePhoto}
+                        />
+                      </View>
+                      <View style={styles.photoWrapper}>
+                        <Text style={styles.photoLabel}>
+                          {t("practice.photoAfterLabel")}
+                        </Text>
+                        <Image
+                          source={{
+                            uri: selectedCutDetail.evidence.photoAfterUrl,
+                          }}
+                          style={styles.evidencePhoto}
+                        />
+                      </View>
                     </View>
-                    <View style={styles.photoWrapper}>
-                      <Text style={styles.photoLabel}>
-                        {t("practice.photoAfterLabel")}
-                      </Text>
-                      <Image
-                        source={{
-                          uri: selectedCutDetail.evidence.photoAfterUrl,
-                        }}
-                        style={styles.evidencePhoto}
-                      />
-                    </View>
-                  </View>
+
+                    {selectedCutDetail.evidence.videoOptionalUrl ? (
+                      <View style={styles.detailVideoBlock}>
+                        <Text style={styles.photoLabel}>
+                          {t("practice.optionalVideoSection")}
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.detailVideoOpen}
+                          activeOpacity={0.85}
+                          onPress={() => {
+                            const url =
+                              selectedCutDetail.evidence?.videoOptionalUrl;
+                            if (url) Linking.openURL(url);
+                          }}
+                        >
+                          <View style={styles.detailVideoPlayIcon}>
+                            <Play color="#0C0A07" size={22} fill="#C9A45C" />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.detailVideoTitle}>
+                              {t("practice.playAttachedVideo")}
+                            </Text>
+                            <Text style={styles.detailVideoHint}>
+                              {t("practice.playAttachedVideoHint")}
+                            </Text>
+                          </View>
+                          <Video color="#C9A45C" size={18} />
+                        </TouchableOpacity>
+                      </View>
+                    ) : null}
+                  </>
                 )}
 
                 <Text style={styles.sectionTitle}>
@@ -810,6 +930,78 @@ export default function PracticeScreen() {
                     </>
                   )}
                 </TouchableOpacity>
+              </View>
+
+              <Text style={styles.sectionTitle}>
+                {t("practice.optionalVideoSection")}
+              </Text>
+              <View
+                style={[
+                  styles.videoPicker,
+                  {
+                    borderColor: videoUri
+                      ? "rgba(201, 164, 92, 0.55)"
+                      : "rgba(255, 255, 255, 0.1)",
+                    backgroundColor: videoUri
+                      ? "rgba(201, 164, 92, 0.08)"
+                      : "#0C0A07",
+                  },
+                ]}
+              >
+                <TouchableOpacity
+                  onPress={pickVideo}
+                  style={styles.videoPickerMain}
+                  activeOpacity={0.85}
+                >
+                  <View
+                    style={[
+                      styles.videoIconWrap,
+                      videoUri && {
+                        backgroundColor: "rgba(201, 164, 92, 0.18)",
+                        borderColor: "rgba(201, 164, 92, 0.4)",
+                      },
+                    ]}
+                  >
+                    <Video
+                      color={videoUri ? "#C9A45C" : "#897F6B"}
+                      size={20}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={[
+                        styles.photoPickerText,
+                        {
+                          marginTop: 0,
+                          color: videoUri ? "#C9A45C" : "#B0A894",
+                          fontWeight: videoUri ? "600" : "500",
+                        },
+                      ]}
+                    >
+                      {videoUri
+                        ? t("practice.videoSelected")
+                        : t("practice.videoOptionalLabel")}
+                    </Text>
+                    {videoUri ? (
+                      <Text style={styles.videoHint}>
+                        {t("practice.videoTapToReplace")}
+                      </Text>
+                    ) : null}
+                  </View>
+                </TouchableOpacity>
+                {videoUri ? (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setVideoUri(null);
+                      setVideoMimeType(undefined);
+                    }}
+                    style={styles.videoRemoveBtn}
+                    hitSlop={10}
+                    accessibilityLabel={t("practice.videoRemove")}
+                  >
+                    <X color="#B0A894" size={16} />
+                  </TouchableOpacity>
+                ) : null}
               </View>
 
               <Text style={styles.sectionTitle}>
@@ -1051,6 +1243,36 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.1)",
   },
+  detailVideoBlock: { marginBottom: 16 },
+  detailVideoOpen: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#0C0A07",
+    borderWidth: 1,
+    borderColor: "rgba(201,164,92,0.35)",
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+  },
+  detailVideoPlayIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#C9A45C",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  detailVideoTitle: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  detailVideoHint: {
+    color: "#897F6B",
+    fontSize: 11,
+    marginTop: 2,
+  },
   photoPickerContainer: { flexDirection: "row", gap: 12, marginBottom: 16 },
   photoPicker: {
     flex: 1,
@@ -1064,6 +1286,48 @@ const styles = StyleSheet.create({
   },
   pickedImage: { width: "100%", height: "100%" },
   photoPickerText: { color: "#B0A894", fontSize: 12, marginTop: 4 },
+  videoPicker: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#0C0A07",
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  videoPickerMain: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  videoIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  videoHint: {
+    color: "#897F6B",
+    fontSize: 11,
+    marginTop: 2,
+  },
+  videoRemoveBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   technicalInput: {
     backgroundColor: "#0C0A07",
     borderWidth: 1,

@@ -21,7 +21,7 @@ import {
   MessageSquare,
   BookOpen,
 } from "lucide-react-native";
-import { getTheoreticalModules, storage, TheoreticalModule } from "@/services";
+import { getTheoreticalModules, getMyProgress, storage, TheoreticalModule } from "@/services";
 
 export default function HomeScreen() {
   const { t } = useTranslation();
@@ -32,6 +32,7 @@ export default function HomeScreen() {
     null,
   );
   const [progressPercent, setProgressPercent] = useState(0);
+  const [courseMonth, setCourseMonth] = useState(1);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
 
@@ -42,15 +43,35 @@ export default function HomeScreen() {
         setUserData(storedUser);
       }
 
-      const modules = await getTheoreticalModules("");
-      const completed = await storage.getCompletedModules();
+      const token = (await storage.getToken()) || "";
+      const [modules, progress] = await Promise.all([
+        getTheoreticalModules(token, true).catch(() => [] as TheoreticalModule[]),
+        getMyProgress(token).catch(() => null),
+      ]);
 
-      if (modules && modules.length > 0) {
+      if (progress) {
+        setProgressPercent(progress.theory.percent);
+        setCourseMonth(progress.courseMonth);
+        const currentId = progress.currentModule?.id;
+        if (currentId && modules.length > 0) {
+          const match =
+            modules.find((m) => m.id === currentId) || modules[0];
+          setCurrentModule(match);
+        } else if (modules.length > 0) {
+          setCurrentModule(modules[0]);
+        }
+        const completedIds = progress.theory.modules
+          .filter((m) => m.status === "COMPLETED")
+          .map((m) => m.id);
+        for (const id of completedIds) {
+          await storage.addCompletedModule(id);
+        }
+      } else if (modules && modules.length > 0) {
+        const completed = await storage.getCompletedModules();
         const uncompleted =
           modules.find((m) => !completed.includes(m.id)) ||
           modules[modules.length - 1];
         setCurrentModule(uncompleted);
-
         const percent = Math.round(
           (completed.filter((id) => modules.some((m) => m.id === id)).length /
             modules.length) *
@@ -178,7 +199,7 @@ export default function HomeScreen() {
                 }}
               >
                 {t("home.monthProgress", {
-                  current: currentModule?.month || 1,
+                  current: courseMonth,
                   total: 17,
                 })}
               </Text>

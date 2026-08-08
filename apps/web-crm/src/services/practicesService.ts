@@ -9,6 +9,7 @@ export interface PendingCut {
     id: string;
     photoBeforeUrl: string;
     photoAfterUrl: string;
+    videoOptionalUrl?: string | null;
     technicalSheetText: string;
     createdAt: string;
   };

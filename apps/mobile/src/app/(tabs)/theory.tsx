@@ -23,7 +23,7 @@ import {
   Scissors,
   BookOpen,
 } from "lucide-react-native";
-import { getTheoreticalModules, TheoreticalModule, storage } from "@/services";
+import { getTheoreticalModules, getMyProgress, TheoreticalModule, storage } from "@/services";
 
 const DISCIPLINES = [
   { id: "1", name: "Tricología y Dermatología", icon: Microscope },
@@ -47,8 +47,19 @@ export default function TheoryScreen() {
     async function loadData() {
       try {
         const token = await storage.getToken();
-        const data = await getTheoreticalModules(token || "", true);
-        setModules(data);
+        const [data, progress] = await Promise.all([
+          getTheoreticalModules(token || "", true),
+          getMyProgress(token || "").catch(() => null),
+        ]);
+        const statusById = new Map(
+          progress?.theory.modules.map((m) => [m.id, m.status]) || [],
+        );
+        setModules(
+          data.map((m) => ({
+            ...m,
+            progressStatus: statusById.get(m.id) || "LOCKED",
+          })),
+        );
       } catch (err) {
         console.error("Error cargando módulos teóricos:", err);
       } finally {
@@ -59,6 +70,7 @@ export default function TheoryScreen() {
   }, []);
 
   const handleOpenModal = (mod: TheoreticalModule) => {
+    if (mod.progressStatus === "LOCKED") return;
     setSelectedModule(mod);
     setModalVisible(true);
   };
@@ -164,21 +176,27 @@ export default function TheoryScreen() {
           />
         ) : (
           <View style={{ gap: 16 }}>
-            {modules.map((mod, idx) => (
+            {modules.map((mod, idx) => {
+              const isLocked = mod.progressStatus === "LOCKED";
+              return (
               <TouchableOpacity
                 key={mod.id}
                 onPress={() => handleOpenModal(mod)}
-                activeOpacity={0.85}
+                activeOpacity={isLocked ? 1 : 0.85}
               >
                 <GlassCard
                   style={{
                     backgroundColor: "#17120D",
                     borderRadius: 24,
                     borderLeftWidth: 4,
-                    borderLeftColor:
-                      idx === 0 ? "#C9A45C" : "rgba(201, 164, 92, 0.4)",
+                    borderLeftColor: isLocked
+                      ? "rgba(255,255,255,0.15)"
+                      : idx === 0
+                        ? "#C9A45C"
+                        : "rgba(201, 164, 92, 0.4)",
                     borderColor: "rgba(201, 164, 92, 0.2)",
                     padding: 20,
+                    opacity: isLocked ? 0.55 : 1,
                   }}
                 >
                   <View
@@ -197,10 +215,15 @@ export default function TheoryScreen() {
                         letterSpacing: 0.5,
                       }}
                     >
-                      {t("theory.availableLesson", {
-                        month: mod.month,
-                        week: mod.week,
-                      })}
+                      {isLocked
+                        ? t("theory.lockedLesson", {
+                            month: mod.month,
+                            week: mod.week,
+                          })
+                        : t("theory.availableLesson", {
+                            month: mod.month,
+                            week: mod.week,
+                          })}
                     </Text>
                     <View
                       style={{
@@ -212,7 +235,11 @@ export default function TheoryScreen() {
                         justifyContent: "center",
                       }}
                     >
-                      <BookOpen color="#C9A45C" size={18} />
+                      {isLocked ? (
+                        <Lock color="#897F6B" size={18} />
+                      ) : (
+                        <BookOpen color="#C9A45C" size={18} />
+                      )}
                     </View>
                   </View>
 
@@ -264,7 +291,8 @@ export default function TheoryScreen() {
                   </View>
                 </GlassCard>
               </TouchableOpacity>
-            ))}
+              );
+            })}
 
             <GlassCard
               style={{

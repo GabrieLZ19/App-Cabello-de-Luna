@@ -175,6 +175,48 @@ export function Step1GeneralInfo({
           </div>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <div>
+            <label className="block text-xs text-[#B0A894] font-medium mb-1.5">
+              Fecha de liberación (sábado recomendado)
+            </label>
+            <input
+              type="datetime-local"
+              value={formData.releaseDate || ""}
+              onChange={(e) =>
+                setFormData((prev: any) => ({
+                  ...prev,
+                  releaseDate: e.target.value,
+                }))
+              }
+              className="w-full bg-[#0C0A07] border border-white/10 rounded-xl p-3 text-xs text-white focus:border-[#C9A45C] outline-none"
+            />
+            <p className="text-[10px] text-gray-500 mt-1">
+              Si queda en borrador, el sistema la publica automáticamente al
+              llegar esta fecha.
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs text-[#B0A894] font-medium mb-1.5">
+              Estado de publicación
+            </label>
+            <select
+              value={formData.status || "DRAFT"}
+              onChange={(e) =>
+                setFormData((prev: any) => ({
+                  ...prev,
+                  status: e.target.value,
+                }))
+              }
+              className="w-full bg-[#0C0A07] border border-white/10 rounded-xl p-3 text-xs text-white focus:border-[#C9A45C] outline-none"
+            >
+              <option value="DRAFT">Borrador (programada)</option>
+              <option value="PUBLISHED">Publicada</option>
+              <option value="INACTIVE">Inactiva</option>
+            </select>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 pt-2">
           <div>
             <label className="block text-xs text-[#B0A894] font-medium mb-1.5">

@@ -11,6 +11,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { getTheoreticalModules } from "@/services/classService";
 import { getDashboardStats } from "@/services/dashboardService";
+import { getPendingCutsForReview } from "@/services/practicesService";
 
 const Users: any = UsersIcon;
 const Scissors: any = ScissorsIcon;
@@ -32,9 +33,10 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadDashboardData() {
       try {
-        const [modules, uStats] = await Promise.all([
+        const [modules, uStats, pendingCuts] = await Promise.all([
           getTheoreticalModules(),
           getDashboardStats(),
+          getPendingCutsForReview().catch(() => []),
         ]);
 
         const totalModules = Array.isArray(modules) ? modules.length : 0;
@@ -42,7 +44,7 @@ export default function DashboardPage() {
 
         setStats({
           activeStudents,
-          pendingPractices: 0,
+          pendingPractices: Array.isArray(pendingCuts) ? pendingCuts.length : 0,
           totalModules,
         });
       } catch (err) {

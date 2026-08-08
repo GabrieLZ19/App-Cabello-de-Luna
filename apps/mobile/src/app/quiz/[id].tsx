@@ -237,6 +237,41 @@ export default function QuizScreen() {
               : t("quiz.failedDesc")}
           </Text>
 
+          {isPassed && quizResult.badge && !quizResult.badge.alreadyOwned ? (
+            <View
+              style={{
+                backgroundColor: "rgba(201, 164, 92, 0.12)",
+                borderWidth: 1,
+                borderColor: "rgba(201, 164, 92, 0.35)",
+                borderRadius: 16,
+                paddingVertical: 14,
+                paddingHorizontal: 18,
+                marginBottom: 24,
+                width: "100%",
+                maxWidth: 340,
+              }}
+            >
+              <Text
+                style={{
+                  color: "#C9A45C",
+                  fontSize: 11,
+                  fontWeight: "bold",
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                  marginBottom: 4,
+                }}
+              >
+                {t("quiz.newLevelUnlocked")}
+              </Text>
+              <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "bold" }}>
+                {quizResult.badge.title}
+              </Text>
+              <Text style={{ color: "#B0A894", fontSize: 13, marginTop: 4 }}>
+                {quizResult.badge.description}
+              </Text>
+            </View>
+          ) : null}
+
           {/* Metric Boxes */}
           <View
             style={{
@@ -352,7 +387,9 @@ export default function QuizScreen() {
                     letterSpacing: 0.5,
                   }}
                 >
-                  {t("quiz.newLevelUnlocked")}
+                  {quizResult.unlockedModule
+                    ? t("quiz.newLevelUnlocked")
+                    : t("quiz.theoryCompleteTitle")}
                 </Text>
                 <Text
                   style={{
@@ -362,7 +399,8 @@ export default function QuizScreen() {
                     marginTop: 2,
                   }}
                 >
-                  {t("quiz.nextModuleDefault")}
+                  {quizResult.unlockedModule?.title ||
+                    t("quiz.theoryCompleteMessage")}
                 </Text>
               </View>
             </GlassCard>
@@ -449,7 +487,9 @@ export default function QuizScreen() {
                   marginRight: 8,
                 }}
               >
-                {t("quiz.continueToNextModule")}
+                {quizResult.unlockedModule
+                  ? t("quiz.continueToNextModule")
+                  : t("quiz.backToTheory")}
               </Text>
               <ArrowRight color="#0C0A07" size={20} />
             </TouchableOpacity>

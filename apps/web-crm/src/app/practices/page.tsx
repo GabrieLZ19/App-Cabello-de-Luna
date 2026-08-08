@@ -11,6 +11,7 @@ import {
   PendingCut,
 } from "@/services/practicesService";
 import { CutReviewModal } from "@/components/practices/CutReviewModal";
+import { PageSkeleton } from "@/components/PageSkeleton";
 
 const Scissors: any = ScissorsIcon;
 const Eye: any = EyeIcon;
@@ -35,6 +36,15 @@ export default function PracticesPage() {
 
   useEffect(() => {
     fetchCuts();
+  }, []);
+
+  useEffect(() => {
+    const onSubmitted = () => {
+      fetchCuts();
+    };
+    window.addEventListener("iltct:practice-submitted", onSubmitted);
+    return () =>
+      window.removeEventListener("iltct:practice-submitted", onSubmitted);
   }, []);
 
   return (
@@ -64,9 +74,7 @@ export default function PracticesPage() {
       {/* Tabla de Prácticas Pendientes */}
       <div className="glass-panel p-4 sm:p-6">
         {loading ? (
-          <div className="text-center py-12 text-[#B0A894] text-xs">
-            Cargando prácticas pendientes...
-          </div>
+          <PageSkeleton rows={5} showCards={false} />
         ) : practices.length === 0 ? (
           <div className="text-center py-12 bg-black/30 rounded-xl border border-white/10 p-4">
             <Scissors className="w-8 h-8 text-gray-500 mx-auto mb-2" />

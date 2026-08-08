@@ -30,6 +30,12 @@
           "resizeMode": "contain",
           "backgroundColor": "#0C0A07"
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#C9A45C"
+        }
       ]
     ],
     "scheme": "iltct",

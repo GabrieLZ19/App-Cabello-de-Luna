@@ -63,7 +63,9 @@ export default function EditClassPage() {
     title: "",
     month: 1,
     week: 1,
-    totalDurationMinutes: 45,
+    totalDurationMinutes: 40,
+    releaseDate: "",
+    status: "DRAFT",
     level: "Técnico Profesional",
     instructorName: "",
     hasVideo: false,
@@ -130,7 +132,11 @@ export default function EditClassPage() {
             title: mod.title || "",
             month: mod.month || 1,
             week: mod.week || 1,
-            totalDurationMinutes: mod.totalDurationMinutes || 45,
+            totalDurationMinutes: mod.totalDurationMinutes || 40,
+            releaseDate: mod.releaseDate
+              ? new Date(mod.releaseDate).toISOString().slice(0, 16)
+              : "",
+            status: mod.status || "DRAFT",
             level: mod.level || "Técnico Profesional",
             instructorName: mod.instructorName || mod.avatar?.name || "",
             hasVideo: mod.hasVideo !== undefined ? mod.hasVideo : false,
@@ -306,6 +312,10 @@ export default function EditClassPage() {
         month: Number(formData.month),
         week: Number(formData.week),
         totalDurationMinutes: Number(formData.totalDurationMinutes),
+        releaseDate: formData.releaseDate
+          ? new Date(formData.releaseDate).toISOString()
+          : null,
+        status: formData.status || "DRAFT",
         level: formData.level,
         instructorName: formData.instructorName,
         hasVideo: formData.hasVideo,

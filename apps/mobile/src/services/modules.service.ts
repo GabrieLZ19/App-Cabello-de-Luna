@@ -29,6 +29,7 @@ export interface EvaluationItem {
   title: string;
   passingScore: number;
   totalQuestions: number;
+  isFinalExam?: boolean;
   questions?: QuestionItem[];
 }
 
@@ -71,6 +72,8 @@ export interface TheoreticalModule {
     isMarianaClone?: boolean;
   };
   status?: 'PUBLISHED' | 'DRAFT' | 'INACTIVE';
+  releaseDate?: string | null;
+  progressStatus?: 'LOCKED' | 'AVAILABLE' | 'IN_PROGRESS' | 'COMPLETED';
   evaluations?: EvaluationItem[];
 }
 
@@ -82,6 +85,19 @@ export interface QuizResult {
   passed: boolean;
   correctAnswers: number;
   totalQuestions: number;
+  unlockedModule?: {
+    id?: string;
+    title?: string;
+    month?: number;
+    week?: number;
+  } | null;
+  badge?: {
+    title: string;
+    description: string;
+    alreadyOwned?: boolean;
+  } | null;
+  phaseChanged?: boolean;
+  newPhase?: string;
 }
 
 let cachedModules: TheoreticalModule[] | null = null;
@@ -91,8 +107,12 @@ export async function getTheoreticalModules(token: string, forceRefresh = false)
     return cachedModules;
   }
   const data = await fetchClient<TheoreticalModule[]>('/modules/theory', { method: 'GET' }, token);
-  // Filtrar solo los publicados
-  const publishedData = (data || []).filter(m => m.status === 'PUBLISHED');
+  const now = Date.now();
+  const publishedData = (data || []).filter((m) => {
+    if (m.status !== 'PUBLISHED') return false;
+    if (!m.releaseDate) return true;
+    return new Date(m.releaseDate).getTime() <= now;
+  });
   cachedModules = publishedData;
   return publishedData;
 }

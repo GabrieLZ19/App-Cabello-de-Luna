@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -20,7 +20,12 @@ import {
   Check,
   ChevronRight,
 } from "lucide-react-native";
+import {
+  registerForPushNotifications,
+  unregisterPushToken,
+} from "@/services/notifications.service";
 
+let cachedPushToken: string | null = null;
 // Componente Toggle Animado Elegante
 const CustomSmoothSwitch = ({
   value,
@@ -95,17 +100,38 @@ export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
 
   const [currentLang, setCurrentLang] = useState(i18n.language || "es");
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  useEffect(() => {
+    void registerForPushNotifications().then((token) => {
+      if (token) {
+        cachedPushToken = token;
+        setNotificationsEnabled(true);
+      }
+    });
+  }, []);
+
+  const handleNotificationsToggle = async (enabled: boolean) => {
+    setNotificationsEnabled(enabled);
+    if (enabled) {
+      const token = await registerForPushNotifications();
+      cachedPushToken = token;
+      if (!token) setNotificationsEnabled(false);
+    } else if (cachedPushToken) {
+      await unregisterPushToken(cachedPushToken);
+      cachedPushToken = null;
+    }
+  };
 
   const changeLanguage = (langCode: string) => {
     setCurrentLang(langCode);
-    i18n.changeLanguage(langCode); // Cambia el idioma reactivamente en toda la app
+    i18n.changeLanguage(langCode);
   };
 
   const languages = [
-    { code: "es", label: t("settings.spanish", "Español"), flag: "🇪🇸" },
-    { code: "en", label: t("settings.english", "English"), flag: "🇺🇸" },
-    { code: "pt", label: t("settings.portuguese", "Português"), flag: "🇧🇷" },
+    { code: "es", label: t("settings.spanish"), short: t("settings.languageCodeEs") },
+    { code: "en", label: t("settings.english"), short: t("settings.languageCodeEn") },
+    { code: "pt", label: t("settings.portuguese"), short: t("settings.languageCodePt") },
   ];
 
   return (
@@ -192,9 +218,34 @@ export default function SettingsScreen() {
                 }}
               >
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <Text style={{ fontSize: 18, marginRight: 12 }}>
-                    {lang.flag}
-                  </Text>
+                  <View
+                    style={{
+                      width: 36,
+                      height: 28,
+                      borderRadius: 8,
+                      backgroundColor: isSelected
+                        ? "rgba(201, 164, 92, 0.2)"
+                        : "rgba(255,255,255,0.06)",
+                      borderWidth: 1,
+                      borderColor: isSelected
+                        ? "#C9A45C"
+                        : "rgba(255,255,255,0.1)",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginRight: 12,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: isSelected ? "#C9A45C" : "#B0A894",
+                        fontSize: 11,
+                        fontWeight: "bold",
+                        letterSpacing: 0.5,
+                      }}
+                    >
+                      {lang.short}
+                    </Text>
+                  </View>
                   <Text
                     style={{
                       color: isSelected ? "#C9A45C" : "#FFFFFF",
@@ -239,31 +290,44 @@ export default function SettingsScreen() {
               justifyContent: "space-between",
             }}
           >
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  backgroundColor: "rgba(201, 164, 92, 0.12)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 12,
-                }}
-              >
-                <Bell color="#C9A45C" size={18} />
+            <View style={{ flex: 1, marginRight: 12 }}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: "rgba(201, 164, 92, 0.12)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: 12,
+                  }}
+                >
+                  <Bell color="#C9A45C" size={18} />
+                </View>
+                <Text
+                  style={{ color: "#FFFFFF", fontSize: 15, fontWeight: "500" }}
+                >
+                  {t("settings.notifications")}
+                </Text>
               </View>
               <Text
-                style={{ color: "#FFFFFF", fontSize: 15, fontWeight: "500" }}
+                style={{
+                  color: "#897F6B",
+                  fontSize: 11,
+                  marginTop: 8,
+                  marginLeft: 48,
+                  lineHeight: 16,
+                }}
               >
-                {t("settings.notifications", "Notificaciones Push")}
+                {t("settings.notificationsExpoGoHint")}
               </Text>
             </View>
 
             {/* Interruptor animado y fluido */}
             <CustomSmoothSwitch
               value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
+              onValueChange={handleNotificationsToggle}
             />
           </View>
         </GlassCard>
