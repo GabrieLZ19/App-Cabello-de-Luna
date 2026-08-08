@@ -36,7 +36,8 @@
         {
           "color": "#C9A45C"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "scheme": "iltct",
     "extra": {
