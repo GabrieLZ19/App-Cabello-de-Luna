@@ -18,9 +18,7 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "react": ["./node_modules/react"],
-      "react-dom": ["./node_modules/react-dom"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["next-env.d.ts", ".next/types/**/*.ts", "**/*.ts", "**/*.tsx"],
