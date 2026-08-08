@@ -1,13 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PdfParserService, ParsedModuleSections } from './pdf-parser.service';
 import { ModuleStatus } from '@iltct/db';
+import { ProgressService } from '../progress/progress.service';
 
 @Injectable()
 export class ModulesService {
   constructor(
     private prisma: PrismaService,
     private pdfParserService: PdfParserService,
+    @Inject(forwardRef(() => ProgressService))
+    private progressService: ProgressService,
   ) {}
 
   parsePdfClassText(rawText: string): ParsedModuleSections {
@@ -60,6 +63,7 @@ export class ModulesService {
         hasVideo: data.hasVideo !== undefined ? Boolean(data.hasVideo) : false,
         status: validStatus,
         sectionTogglesJson: data.sectionTogglesJson || null,
+        releaseDate: data.releaseDate ? new Date(data.releaseDate) : null,
         avatarId,
       },
     });
@@ -71,6 +75,7 @@ export class ModulesService {
           title: `Autoevaluación: ${createdModule.title}`,
           passingScore: 7,
           totalQuestions: data.quizQuestions.length,
+          isFinalExam: Boolean(data.isFinalExam),
           questions: {
             create: data.quizQuestions.map((q: any) => ({
               text: q.questionText || q.text || '',
@@ -125,6 +130,12 @@ export class ModulesService {
         hasVideo: data.hasVideo !== undefined ? Boolean(data.hasVideo) : existing.hasVideo,
         status: updatedStatus,
         sectionTogglesJson: data.sectionTogglesJson !== undefined ? data.sectionTogglesJson : existing.sectionTogglesJson,
+        releaseDate:
+          data.releaseDate !== undefined
+            ? data.releaseDate
+              ? new Date(data.releaseDate)
+              : null
+            : existing.releaseDate,
         avatarId,
       },
     });
@@ -194,6 +205,7 @@ export class ModulesService {
             title: true,
             passingScore: true,
             totalQuestions: true,
+            isFinalExam: true,
           },
         },
       },
@@ -234,7 +246,7 @@ export class ModulesService {
   async submitQuiz(userId: string, evaluationId: string, userAnswers: number[]) {
     const evaluation = await this.prisma.evaluation.findUnique({
       where: { id: evaluationId },
-      include: { questions: true },
+      include: { questions: true, module: true },
     });
 
     if (!evaluation) {
@@ -264,14 +276,32 @@ export class ModulesService {
       },
     });
 
+    let progression: Awaited<
+      ReturnType<ProgressService['completeModuleAfterQuizPass']>
+    > | null = null;
+
+    if (passed) {
+      progression = await this.progressService.completeModuleAfterQuizPass(
+        userId,
+        evaluation.moduleId,
+        { isFinalExam: evaluation.isFinalExam },
+      );
+    }
+
     return {
-      message: passed ? '¡Felicitaciones! Has aprobado la autoevaluación.' : 'Autoevaluación completada. Podés repasar la lección e intentarlo de nuevo.',
+      message: passed
+        ? '¡Felicitaciones! Has aprobado la autoevaluación.'
+        : 'Autoevaluación completada. Podés repasar la lección e intentarlo de nuevo.',
       attemptId: attempt.id,
       score,
       passingScore: evaluation.passingScore,
       passed,
       correctAnswers: correctCount,
       totalQuestions: total,
+      unlockedModule: progression?.unlockedModule ?? null,
+      badge: progression?.badge ?? null,
+      phaseChanged: progression?.phaseChanged ?? false,
+      newPhase: progression?.newPhase,
     };
   }
 }

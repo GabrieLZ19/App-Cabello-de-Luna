@@ -62,6 +62,13 @@ enum PaymentStatus {
   FAILED
 }
 
+enum ModuleProgressStatus {
+  LOCKED
+  AVAILABLE
+  IN_PROGRESS
+  COMPLETED
+}
+
 model Franchise {
   id          String   @id @default(uuid())
   code        String   @unique
@@ -86,10 +93,11 @@ model User {
   language         Language         @default(ES)
   enrollmentStatus EnrollmentStatus @default(PENDING_PAYMENT)
   currentPhase     Phase            @default(THEORY)
-  
+  theoryStartedAt  DateTime?
+
   franchiseId      String?
   franchise        Franchise?       @relation(fields: [franchiseId], references: [id])
-  
+
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
@@ -99,6 +107,8 @@ model User {
   badges           UserBadge[]
   activityLogs     ActivityLog[]
   feedbacksGiven   Feedback[]       @relation("InstructorFeedback")
+  moduleProgress   ModuleProgress[]
+  pushTokens       DevicePushToken[]
 
   @@map("users")
 }
@@ -172,6 +182,7 @@ model TheoreticalModule {
   createdAt            DateTime @default(now())
 
   evaluations          Evaluation[]
+  progressRecords      ModuleProgress[]
 
   @@map("theoretical_modules")
 }
@@ -183,6 +194,7 @@ model Evaluation {
   title          String
   passingScore   Int      @default(7)
   totalQuestions Int      @default(10)
+  isFinalExam    Boolean  @default(false)
   createdAt      DateTime @default(now())
 
   questions      Question[]
@@ -312,4 +324,34 @@ model ActivityLog {
   createdAt DateTime @default(now())
 
   @@map("activity_logs")
+}
+
+model ModuleProgress {
+  id                   String               @id @default(uuid())
+  userId               String
+  user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  moduleId             String
+  module               TheoreticalModule    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  status               ModuleProgressStatus @default(LOCKED)
+  startedAt            DateTime?
+  completedAt          DateTime?
+  theorySecondsSpent   Int                  @default(0)
+  activitySecondsSpent Int                  @default(0)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  @@unique([userId, moduleId])
+  @@map("module_progress")
+}
+
+model DevicePushToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  platform  String?
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@map("device_push_tokens")
 }

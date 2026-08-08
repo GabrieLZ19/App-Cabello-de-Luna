@@ -4,6 +4,34 @@ Este documento recopila la configuración relevante, variables de entorno, mecan
 
 ---
 
+## 🔀 Git: dual remote (personal + Whapy)
+
+Un solo working copy local. **No** cambiar `origin` al repo de Whapy: así deploys, EAS, Vercel y `.env` siguen apuntando al repo personal.
+
+| Remote | URL | Rol |
+|---|---|---|
+| `origin` | `https://github.com/GabrieLZ19/App-Cabello-de-Luna.git` | Trabajo diario + deploys |
+| `whapy` | `https://github.com/Whapy-Dev/Cabello-de-luna.git` | Entrega / espejo empresa |
+
+### Día a día (después de cada commit)
+
+```bash
+git push origin main && git push whapy main
+```
+
+`git push` / `git pull` sin argumentos siguen yendo a **origin** (upstream = `origin/main`).
+
+### Qué no hacer
+
+- No clonar el repo vacío de Whapy para “rellenarlo” a mano.
+- No cambiar `origin` a Whapy (rompe deploys / hábitos de CI).
+- No reconectar Vercel/EAS al repo de Whapy salvo pedido explícito.
+- No force-push a Whapy si ya hay trabajo de otra persona.
+
+Playbook reutilizable (otros proyectos): `t2t-app/docs/WHAPY_DUAL_REMOTE.md`.
+
+---
+
 ## 🔑 Autenticación y Verificación OTP
 
 ### Modo Desarrollo (`NODE_ENV !== 'production'`)
@@ -39,6 +67,29 @@ SMTP_PORT=587
 SMTP_USER=notificaciones@tu-instituto.com
 SMTP_PASS=tu_contraseña_de_aplicacion
 ```
+
+### Checklist emails en producción
+1. `NODE_ENV=production` (desactiva OTP maestro `123456` y omite `otpCode` en JSON).
+2. `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` configurados y verificados.
+3. Probar flujo de **verificación de cuenta** (registro / reenvío OTP).
+4. Probar flujo de **recuperación de contraseña** (asunto y plantilla distintos).
+5. Confirmar que el remitente no cae en spam (SPF/DKIM del proveedor SMTP).
+
+---
+
+### Push notifications (Expo)
+- La app registra el token en `POST /notifications/register-token`.
+- Triggers: módulo liberado (scheduler) y feedback de práctica (approve/corrección).
+- En dispositivo real/dev client hace falta `expo-notifications` instalado (`pnpm install` en el monorepo).
+- Push: el ícono es el de la app (nativo). El toast del CRM usa `/logo.png` estático — no hace falta `PUSH_LOGO_URL`.
+- Tiempo real (WebSocket): namespace `/realtime` — CRM recibe `practice:submitted`, alumna recibe `practice:reviewed`. Toast CRM arriba a la derecha con animación.
+
+### Storage de evidencias (Supabase)
+- Bucket `practice-evidences`: **privado**, máx. 30 MB, MIME de imagen/video acotados.
+- En DB se guarda el **path** del objeto (no URL pública).
+- Al leer prácticas, el backend firma URLs temporales (~2 h) con `SUPABASE_SECRET_KEY` (API Keys nuevas). Fallback legacy: `SUPABASE_SERVICE_ROLE_KEY`.
+- Al reenviar evidencia se borran los archivos anteriores (sin huérfanos).
+- Variable requerida en `apps/backend/.env`: `SUPABASE_SECRET_KEY` (Dashboard → API Keys → Secret keys).
 
 ---
 

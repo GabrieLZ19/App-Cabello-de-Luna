@@ -78,7 +78,7 @@ export class AuthService {
     });
 
     // Enviar correo real con MailService
-    await this.mailService.sendOtpEmail(cleanEmail, otpCode);
+    await this.mailService.sendOtpEmail(cleanEmail, otpCode, 'verification');
 
     const payload = { sub: user.id, email: user.email, role: user.role };
     const accessToken = this.jwtService.sign(payload);
@@ -109,7 +109,7 @@ export class AuthService {
       expiresAt: Date.now() + 15 * 60 * 1000,
     });
 
-    await this.mailService.sendOtpEmail(cleanEmail, otpCode);
+    await this.mailService.sendOtpEmail(cleanEmail, otpCode, 'password_recovery');
 
     const isDev = process.env.NODE_ENV !== 'production';
 
@@ -167,7 +167,7 @@ export class AuthService {
       expiresAt: Date.now() + 15 * 60 * 1000,
     });
 
-    await this.mailService.sendOtpEmail(cleanEmail, otpCode);
+    await this.mailService.sendOtpEmail(cleanEmail, otpCode, 'verification');
 
     const isDev = process.env.NODE_ENV !== 'production';
 

@@ -7,6 +7,9 @@ import { PracticesModule } from "./modules/practices/practices.module";
 import { MailModule } from "./modules/mail/mail.module";
 import { FranchisesModule } from "./modules/franchises/franchises.module";
 import { HealthModule } from "./modules/health/health.module";
+import { ProgressModule } from "./modules/progress/progress.module";
+import { NotificationsModule } from "./modules/notifications/notifications.module";
+import { RealtimeModule } from "./modules/realtime/realtime.module";
 
 @Module({
   imports: [
@@ -18,6 +21,9 @@ import { HealthModule } from "./modules/health/health.module";
     PracticesModule,
     FranchisesModule,
     HealthModule,
+    ProgressModule,
+    NotificationsModule,
+    RealtimeModule,
   ],
 })
 export class AppModule {}

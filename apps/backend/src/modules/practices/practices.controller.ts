@@ -49,6 +49,8 @@ export class PracticesController {
       photoBeforeBase64: string;
       photoAfterBase64: string;
       technicalSheetText: string;
+      videoOptionalBase64?: string;
+      videoMimeType?: string;
     },
   ) {
     if (!body.photoBeforeBase64 || !body.photoAfterBase64) {
@@ -58,8 +60,8 @@ export class PracticesController {
     }
 
     const userId = req.user.userId;
+    const folder = `user-${userId}/model-${body.modelNumber}`;
 
-    // Convertir Base64 a Buffers binarios
     const beforeBuffer = Buffer.from(
       body.photoBeforeBase64.replace(/^data:image\/\w+;base64,/, ""),
       "base64",
@@ -69,14 +71,13 @@ export class PracticesController {
       "base64",
     );
 
-    // Subir a Supabase Storage
     const photoBeforeUrl = await this.storageService.uploadImage(
       {
         buffer: beforeBuffer,
         mimetype: "image/jpeg",
         originalname: "before.jpg",
       } as any,
-      `user-${userId}/model-${body.modelNumber}`,
+      folder,
     );
 
     const photoAfterUrl = await this.storageService.uploadImage(
@@ -85,10 +86,31 @@ export class PracticesController {
         mimetype: "image/jpeg",
         originalname: "after.jpg",
       } as any,
-      `user-${userId}/model-${body.modelNumber}`,
+      folder,
     );
 
-    // Guardar en Postgres via Prisma
+    let videoOptionalUrl: string | null = null;
+    if (body.videoOptionalBase64) {
+      const videoMime = body.videoMimeType || "video/mp4";
+      const videoExt = videoMime.includes("quicktime")
+        ? "mov"
+        : videoMime.includes("webm")
+          ? "webm"
+          : "mp4";
+      const videoBuffer = Buffer.from(
+        body.videoOptionalBase64.replace(/^data:video\/[\w.+-]+;base64,/, ""),
+        "base64",
+      );
+      videoOptionalUrl = await this.storageService.uploadVideo(
+        {
+          buffer: videoBuffer,
+          mimetype: videoMime,
+          originalname: `evidence.${videoExt}`,
+        } as any,
+        folder,
+      );
+    }
+
     return this.practicesService.submitCutEvidence(userId, {
       modelName: body.modelName,
       modelNumber: body.modelNumber,
@@ -97,6 +119,7 @@ export class PracticesController {
       photoBeforeUrl,
       photoAfterUrl,
       technicalSheetText: body.technicalSheetText,
+      videoOptionalUrl,
     });
   }
 

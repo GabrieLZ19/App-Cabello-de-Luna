@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 
+export type OtpEmailPurpose = 'verification' | 'password_recovery';
+
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
@@ -28,8 +30,25 @@ export class MailService {
     }
   }
 
-  async sendOtpEmail(toEmail: string, otpCode: string): Promise<boolean> {
-    this.logger.log(`[CÓDIGO VERIFICACIÓN OTP] Destinatario: ${toEmail} | Código: ${otpCode}`);
+  async sendOtpEmail(
+    toEmail: string,
+    otpCode: string,
+    purpose: OtpEmailPurpose = 'verification',
+  ): Promise<boolean> {
+    const isRecovery = purpose === 'password_recovery';
+    const subject = isRecovery
+      ? 'Recuperación de Contraseña - ILTCT'
+      : 'Verificación de Cuenta - ILTCT';
+    const headline = isRecovery
+      ? 'Recuperá tu acceso'
+      : 'Verificá tu cuenta';
+    const intro = isRecovery
+      ? 'Recibimos una solicitud para restablecer tu contraseña. Tu código de 6 dígitos es:'
+      : 'Tu código de verificación de 6 dígitos es:';
+
+    this.logger.log(
+      `[CÓDIGO ${isRecovery ? 'RECUPERACIÓN' : 'VERIFICACIÓN'} OTP] Destinatario: ${toEmail} | Código: ${otpCode}`,
+    );
 
     if (!this.transporter) {
       return false;
@@ -39,11 +58,12 @@ export class MailService {
       await this.transporter.sendMail({
         from: `"Instituto ILTCT" <${process.env.SMTP_USER}>`,
         to: toEmail,
-        subject: 'Código de Verificación de Cuenta - ILTCT',
+        subject,
         html: `
-          <div style="font-family: Arial, sans-serif; background-color: #0C0A07; color: #FFFFFF; padding: 30px; borderRadius: 16px;">
+          <div style="font-family: Arial, sans-serif; background-color: #0C0A07; color: #FFFFFF; padding: 30px; border-radius: 16px;">
             <h2 style="color: #C9A45C; margin-bottom: 10px;">Instituto Latinoamericano de Tricología</h2>
-            <p style="color: #B0A894; font-size: 14px;">Tu código de verificación de 6 dígitos es:</p>
+            <h3 style="color: #FFFFFF; margin: 0 0 12px;">${headline}</h3>
+            <p style="color: #B0A894; font-size: 14px;">${intro}</p>
             <div style="background-color: #15100A; border: 1px solid #C9A45C; display: inline-block; padding: 14px 28px; border-radius: 12px; font-size: 28px; font-weight: bold; letter-spacing: 6px; color: #FFFFFF; margin: 20px 0;">
               ${otpCode}
             </div>
@@ -51,7 +71,7 @@ export class MailService {
           </div>
         `,
       });
-      this.logger.log(`Correo enviado con éxito a ${toEmail}`);
+      this.logger.log(`Correo (${purpose}) enviado con éxito a ${toEmail}`);
       return true;
     } catch (err: any) {
       this.logger.error(`Error enviando correo SMTP a ${toEmail}: ${err.message}`);
